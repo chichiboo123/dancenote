@@ -12,6 +12,8 @@ export interface PlanColors {
   tape: string
   border: string
   label: string
+  /** 센터(0번) 표시 색 */
+  centerMark: string
 }
 
 const LIGHT: PlanColors = {
@@ -21,6 +23,7 @@ const LIGHT: PlanColors = {
   tape: '#B5793F',
   border: '#9C7B4C',
   label: '#55607A',
+  centerMark: '#D8362A',
 }
 
 const DARK: PlanColors = {
@@ -30,6 +33,7 @@ const DARK: PlanColors = {
   tape: '#5C6A8C',
   border: '#66739A',
   label: '#AEB8CF',
+  centerMark: '#FF7A6E',
 }
 
 export function usePlanColors(): PlanColors {

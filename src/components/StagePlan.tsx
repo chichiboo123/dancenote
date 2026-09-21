@@ -1,9 +1,11 @@
+import { CANVAS_FONT } from '../lib/canvasFont'
 import { useMemo, useRef } from 'react'
 import { Arrow, Circle, Group, Layer, Line, Rect, Stage, Text } from 'react-konva'
 import type Konva from 'konva'
 import { useElementSize } from '../lib/useElementSize'
 import { textColorOn } from '../lib/colors'
 import { usePlanColors } from '../lib/planColors'
+import { frontStageMarks } from '../lib/stageMarks'
 
 export interface Mark {
   id: string
@@ -42,17 +44,22 @@ interface Props {
   flipped?: boolean
   /** 지나온 길(점선) */
   trails?: Trail[]
+  /** 무대 앞쪽 센터 기준 번호(4 3 2 1 0 1 2 3 4) 표시 */
+  showMarks?: boolean
   /** 아이콘을 끌어 옮겼을 때 (무대 좌표 0~1) */
   onMoveMark?: (id: string, x: number, y: number) => void
   /** 빈 곳을 길게 눌렀을 때 */
   onLongPressEmpty?: (x: number, y: number) => void
   /** 아이콘을 눌렀을 때 */
   onSelectMark?: (id: string) => void
+  /** 빈 곳을 한 번 눌렀을 때 (직접 넣기 모드에서 쓴다) */
+  onTapEmpty?: (x: number, y: number) => void
   /** 그림 파일로 저장할 때 쓰려고 캔버스를 밖으로 넘겨 준다. */
   stageRef?: React.RefObject<Konva.Stage | null>
 }
 
 const PAD = 34 // 라벨이 들어갈 바깥 여백
+const BOTTOM_EXTRA = 18 // 앞쪽 번호가 들어갈 자리
 
 /** 위에서 내려다본 무대 평면도. 아래쪽이 객석, 위쪽이 무대 뒤. */
 export default function StagePlan({
@@ -63,19 +70,23 @@ export default function StagePlan({
   showGrid = false,
   flipped = false,
   trails = [],
+  showMarks = true,
   onMoveMark,
   onLongPressEmpty,
   onSelectMark,
+  onTapEmpty,
   stageRef,
 }: Props) {
   const { ref, width } = useElementSize<HTMLDivElement>()
   const colors = usePlanColors()
   const longPressTimer = useRef<number | null>(null)
+  // 길게 누르기가 이미 처리됐으면, 손을 뗄 때 '한 번 누르기'로 또 처리하지 않는다.
+  const longPressFired = useRef(false)
 
   const ratio = stageDepthM / stageWidthM
   const floorW = Math.max(0, width - PAD * 2)
   const floorH = floorW * ratio
-  const viewH = floorH + PAD * 2
+  const viewH = floorH + PAD * 2 + BOTTOM_EXTRA
 
   /**
    * 무대 좌표(0~1) → 화면 좌표.
@@ -111,7 +122,9 @@ export default function StagePlan({
     const pos = stage.getPointerPosition()
     if (!pos) return
     const p = toStage(pos.x, pos.y)
+    longPressFired.current = false
     longPressTimer.current = window.setTimeout(() => {
+      longPressFired.current = true
       onLongPressEmpty(p.x, p.y)
       longPressTimer.current = null
     }, 600)
@@ -132,9 +145,21 @@ export default function StagePlan({
           width={width}
           height={viewH}
           onPointerDown={(e) => {
+            longPressFired.current = false
             if (e.target === e.target.getStage()) startLongPress(e.target.getStage()!)
           }}
-          onPointerUp={cancelLongPress}
+          onPointerUp={(e) => {
+            const handled = longPressFired.current
+            cancelLongPress()
+            // 빈 바닥을 짧게 눌렀을 때만 '한 번 누르기'로 본다.
+            if (!handled && onTapEmpty && e.target === e.target.getStage()) {
+              const pos = e.target.getStage()!.getPointerPosition()
+              if (pos) {
+                const p = toStage(pos.x, pos.y)
+                onTapEmpty(p.x, p.y)
+              }
+            }
+          }}
           onPointerMove={cancelLongPress}
           onPointerLeave={cancelLongPress}
         >
@@ -201,34 +226,66 @@ export default function StagePlan({
               cornerRadius={8}
             />
 
+            {/* 무대 앞쪽 센터 기준 번호 (바닥 테이프 표시) */}
+            {showMarks &&
+              frontStageMarks().map((mark) => {
+                // 반대쪽에서 볼 때는 '앞쪽'이 화면 위가 된다.
+                const vx = PAD + (flipped ? 1 - mark.x : mark.x) * floorW
+                const edgeY = flipped ? PAD : PAD + floorH
+                const dir = flipped ? -1 : 1
+                const tickLen = mark.center ? 16 : 10
+                return (
+                  <Group key={`mk${mark.x}`}>
+                    <Line
+                      points={[vx, edgeY - dir * tickLen, vx, edgeY + dir * 3]}
+                      stroke={mark.center ? colors.centerMark : colors.tape}
+                      strokeWidth={mark.center ? 4 : 2.5}
+                      lineCap="round"
+                    />
+                    <Text
+                      text={mark.label}
+                      x={vx - 14}
+                      y={flipped ? edgeY - dir * tickLen - 20 : edgeY + 6}
+                      width={28}
+                      align="center"
+                      fontSize={mark.center ? 15 : 13}
+                      fontFamily={CANVAS_FONT}
+                      fontStyle={mark.center ? 'bold' : 'normal'}
+                      fill={mark.center ? colors.centerMark : colors.label}
+                    />
+                  </Group>
+                )
+              })}
+
             {/* 라벨: 위쪽 무대 뒤, 아래쪽 객석 */}
             <Text
               text={flipped ? '객석' : '무대 뒤'}
               x={PAD}
-              y={8}
+              y={showMarks && flipped ? 2 : 8}
               width={floorW}
               align="center"
               fontSize={16}
-              fontFamily="Jua, sans-serif"
+              fontFamily={CANVAS_FONT}
               fill={colors.label}
             />
             <Text
               text={flipped ? '무대 뒤' : '객석'}
               x={PAD}
-              y={PAD + floorH + 8}
+              y={PAD + floorH + (showMarks && !flipped ? 26 : 8)}
               width={floorW}
               align="center"
               fontSize={16}
-              fontFamily="Jua, sans-serif"
+              fontFamily={CANVAS_FONT}
               fill={colors.label}
             />
             <Text
-              text={`${stageWidthM}m`}
+              text={`${stageWidthM}m × ${stageDepthM}m`}
               x={PAD}
-              y={PAD + floorH + 8}
+              y={10}
               width={floorW}
               align="right"
               fontSize={13}
+              fontFamily={CANVAS_FONT}
               fill={colors.label}
             />
           </Layer>
@@ -314,7 +371,7 @@ export default function StagePlan({
                   <Text
                     text={m.label}
                     fontSize={Math.max(11, iconR * 0.66)}
-                    fontFamily="Jua, sans-serif"
+                    fontFamily={CANVAS_FONT}
                     fontStyle="bold"
                     fill={textColorOn(m.color)}
                     width={iconR * 4}

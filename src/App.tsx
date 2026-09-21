@@ -67,7 +67,12 @@ export default function App() {
       <Toaster
         position="top-center"
         richColors
-        toastOptions={{ style: { fontFamily: 'var(--font-body)', fontSize: '17px' } }}
+        // 머리말(뒤로·도움말 버튼)을 가리지 않도록 조금 내려서 띄운다.
+        offset={76}
+        duration={2600}
+        toastOptions={{
+          style: { fontFamily: 'var(--font-body)', fontSize: '17px', wordBreak: 'keep-all' },
+        }}
       />
     </HashRouter>
   )

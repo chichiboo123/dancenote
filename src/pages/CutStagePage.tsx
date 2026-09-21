@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
   Check,
+  CopyCheck,
   Eraser,
   Grid3x3,
   MapPin,
@@ -16,7 +17,7 @@ import PhotoCanvas from '../components/PhotoCanvas'
 import StagePlan, { type Mark } from '../components/StagePlan'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { db } from '../db/db'
-import { deleteCut, updateCut } from '../db/repo'
+import { applyStageCornersToAllCuts, deleteCut, rememberStageCorners, updateCut } from '../db/repo'
 import { loadImage, releaseImage } from '../lib/image'
 import { CORNER_LABELS, createStageMapper, isValidQuad } from '../lib/homography'
 import type { Point } from '../db/types'
@@ -126,14 +127,31 @@ export default function CutStagePage() {
   }
 
   // 네 점을 다 찍으면 바로 저장해 둔다. (화면을 떠나도 다시 찍지 않아도 되게)
+  // 이 공연의 기본 무대 영역으로도 기억해 두어, 다음 컷부터는 다시 정하지 않아도 된다.
   useAutoSave(valid ? corners : null, async (saved) => {
     if (!saved) return
-    await updateCut(cutId, { stageCorners: saved as [Point, Point, Point, Point] })
+    const quad = saved as [Point, Point, Point, Point]
+    await updateCut(cutId, { stageCorners: quad })
+    await rememberStageCorners(id, quad, cut?.imageSize)
   })
+
+  /** 이 무대 영역을 이 공연의 다른 컷에도 적용한다. */
+  async function applyToAll(onlyEmpty: boolean) {
+    if (!valid) return
+    const quad = corners as [Point, Point, Point, Point]
+    const changed = await applyStageCornersToAllCuts(id, quad, cut?.imageSize, { onlyEmpty })
+    toast.success(
+      changed > 0
+        ? `다른 컷 ${changed}개에도 같은 무대 영역을 적용했어요.`
+        : '적용할 다른 컷이 없어요.',
+    )
+  }
 
   async function handleSave() {
     if (!valid) return
-    await updateCut(cutId, { stageCorners: corners as [Point, Point, Point, Point] })
+    const quad = corners as [Point, Point, Point, Point]
+    await updateCut(cutId, { stageCorners: quad })
+    await rememberStageCorners(id, quad, cut?.imageSize)
     toast.success('무대 영역을 정했어요! 이제 친구들 이름을 붙여 볼까요?')
     navigate(`/project/${id}/cut/${cutId}/people`)
   }
@@ -298,7 +316,7 @@ export default function CutStagePage() {
                 disabled={testMarks.length === 0}
               >
                 <Eraser size={22} aria-hidden="true" />
-                확인 점 지우기
+                점 지우기
               </button>
             </div>
             {done && testMarks.length === 0 && (
@@ -308,6 +326,37 @@ export default function CutStagePage() {
               </p>
             )}
           </section>
+        </div>
+
+        {valid && (
+          <div className="notice" role="note">
+            <Check size={22} aria-hidden="true" />
+            <span>
+              이 무대 영역은 <strong>이 공연의 기본값</strong>으로 저장돼요. 같은 자리에서 찍은
+              다음 사진·영상은 다시 정하지 않아도 돼요.
+            </span>
+          </div>
+        )}
+
+        <div className="toolbar">
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => applyToAll(true)}
+            disabled={!valid}
+          >
+            <CopyCheck size={22} aria-hidden="true" />
+            빈 컷에 적용
+          </button>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => applyToAll(false)}
+            disabled={!valid}
+          >
+            <CopyCheck size={22} aria-hidden="true" />
+            모든 컷에 적용
+          </button>
         </div>
 
         <button

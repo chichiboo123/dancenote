@@ -1,3 +1,4 @@
+import { CANVAS_FONT } from '../lib/canvasFont'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
@@ -11,6 +12,7 @@ import {
   Loader2,
   MapPin,
   RefreshCw,
+  UserPlus,
   Users,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -24,6 +26,7 @@ import { loadImage, releaseImage } from '../lib/image'
 import { clampToStage, createStageMapper } from '../lib/homography'
 import { detectPeople, footPoint, type PersonBox } from '../lib/detector'
 import { textColorOn } from '../lib/colors'
+import { describePosition } from '../lib/stageMarks'
 import { useAutoSave } from '../lib/useAutoSave'
 import { downloadDataUrl, safeFileName } from '../lib/backup'
 import { josa } from '../lib/names'
@@ -76,9 +79,15 @@ export default function CutPeoplePage() {
   const [detecting, setDetecting] = useState(false)
   const [detectError, setDetectError] = useState<string | null>(null)
   const [picking, setPicking] = useState<string | null>(null)
+  // 직접 넣기: 이 학생을 다음에 누르는 자리에 놓는다.
+  const [placingStudentId, setPlacingStudentId] = useState<string | null>(null)
   const [pane, setPane] = useState<'photo' | 'plan'>('photo')
   const prefs = useViewPrefs()
   const restoredRef = useRef<string | null>(null)
+  // 콜백 안에서 최신 값을 읽기 위한 보관함
+  const hiddenRef = useRef<Record<string, true>>({})
+  const movedRef = useRef<Record<string, Point>>({})
+  const mapperRef = useRef<ReturnType<typeof createStageMapper>>(null)
   const planStageRef = useRef<Konva.Stage | null>(null)
 
   // Dexie가 값을 새로 읽을 때마다 배열이 새로 만들어지므로, 내용으로 비교해 고정한다.
@@ -109,6 +118,29 @@ export default function CutPeoplePage() {
     }
   }, [cut?.imageBlob])
 
+  /** 인식 결과에 붙여 둔 이름을 잃지 않도록, 직접 넣은 자리로 옮겨 담는다. */
+  const keepNamedSpots = useCallback(() => {
+    setManual((prevManual) => {
+      const kept: Spot[] = []
+      setNamed((prevNamed) => {
+        setDetBoxes((prevBoxes) => {
+          for (const box of prevBoxes) {
+            const studentId = prevNamed[box.key]
+            if (!studentId || hiddenRef.current[box.key]) continue
+            const foot = footPoint(box.bbox)
+            const stage =
+              movedRef.current[box.key] ??
+              (mapperRef.current ? clampToStage(mapperRef.current.toStage(foot)) : { x: 0.5, y: 0.5 })
+            kept.push({ key: `k${box.key}-${Date.now()}`, bbox: box.bbox, stage, studentId })
+          }
+          return prevBoxes
+        })
+        return {}
+      })
+      return [...prevManual, ...kept]
+    })
+  }, [])
+
   const runDetection = useCallback(
     async (img: HTMLImageElement) => {
       setDetecting(true)
@@ -117,6 +149,9 @@ export default function CutPeoplePage() {
         const started = performance.now()
         // 낮은 기준으로 한 번만 찾아 두고, 슬라이더는 그 결과를 걸러 내기만 한다.
         const boxes = await detectPeople(img, 0.15)
+        // 다시 찾으면 네모 번호가 새로 매겨지므로, 이미 이름을 붙인 자리는
+        // '직접 넣은 자리'로 옮겨 두어 이름이 사라지지 않게 한다.
+        keepNamedSpots()
         setDetBoxes(boxes.map((b, i) => ({ ...b, key: `d${i}` })))
         const seconds = ((performance.now() - started) / 1000).toFixed(1)
         // 화면에 실제로 보이는 개수(민감도 슬라이더를 넘은 것)만 알려 준다.
@@ -135,7 +170,7 @@ export default function CutPeoplePage() {
         setDetecting(false)
       }
     },
-    [slider],
+    [slider, keepNamedSpots],
   )
 
   // 저장된 결과가 있으면 그대로 불러오고, 없으면 사람을 찾는다.
@@ -165,6 +200,16 @@ export default function CutPeoplePage() {
     }
     runDetection(image)
   }, [cut, image, runDetection])
+
+  useEffect(() => {
+    hiddenRef.current = hidden
+  }, [hidden])
+  useEffect(() => {
+    movedRef.current = moved
+  }, [moved])
+  useEffect(() => {
+    mapperRef.current = mapper
+  }, [mapper])
 
   const minScore = sliderToScore(slider)
 
@@ -196,6 +241,12 @@ export default function CutPeoplePage() {
     [spots],
   )
 
+  /** 이 컷에 아직 자리를 안 잡은 친구들 */
+  const missingStudents = useMemo(
+    () => students.filter((student) => !placedIds.has(student.id)),
+    [students, placedIds],
+  )
+
   const namedCount = placedIds.size
   const unnamedCount = spots.length - namedCount
 
@@ -217,11 +268,32 @@ export default function CutPeoplePage() {
     setPicking(key)
   }
 
+  /** 직접 넣기 모드에서 고른 친구를 이 자리에 놓는다. */
+  function placePendingStudent(stage: Point, bbox?: [number, number, number, number]) {
+    if (!placingStudentId) return false
+    const key = `m${Date.now()}`
+    const at = clampToStage(stage)
+    setManual((prev) => [...prev, { key, stage: at, bbox, studentId: placingStudentId }])
+    const student = studentById[placingStudentId]
+    setPlacingStudentId(null)
+    toast.success(`${student?.name ?? '친구'} 자리를 넣었어요. (${describePosition(at.x)})`)
+    return true
+  }
+
+  /** 누른 곳을 발 위치로 보고, 그 위로 사람만 한 네모를 만들어 둔다. */
+  function boxAtFoot(p: Point): [number, number, number, number] {
+    const size = image ? image.width * 0.06 : 40
+    return [p.x - size / 2, p.y - size * 2.4, size, size * 2.4]
+  }
+
   function handleLongPressPhoto(p: Point) {
     if (!mapper) return
-    // 누른 곳을 발 위치로 보고, 그 위로 사람만 한 네모를 만들어 둔다.
-    const size = image ? image.width * 0.06 : 40
-    addManualSpot(mapper.toStage(p), [p.x - size / 2, p.y - size * 2.4, size, size * 2.4])
+    addManualSpot(mapper.toStage(p), boxAtFoot(p))
+  }
+
+  function handleTapPhoto(p: Point) {
+    if (!mapper || !placingStudentId) return
+    placePendingStudent(mapper.toStage(p), boxAtFoot(p))
   }
 
   async function handlePick(studentId: string) {
@@ -379,9 +451,19 @@ export default function CutPeoplePage() {
 
       <main className="app-main work-main">
         <div className="guide-bar" role="status">
-          <Users size={24} aria-hidden="true" />
+          {placingStudentId ? (
+            <UserPlus size={24} aria-hidden="true" />
+          ) : (
+            <Users size={24} aria-hidden="true" />
+          )}
           <span>
-            {detecting
+            {placingStudentId
+              ? `${studentById[placingStudentId]?.name ?? '친구'}${josa(
+                  studentById[placingStudentId]?.name ?? '친구',
+                  '이',
+                  '가',
+                )} 선 자리를 사진이나 평면도에서 눌러요`
+              : detecting
               ? '사람을 찾는 중이에요…'
               : unnamedCount > 0
                 ? `네모를 눌러 이름을 붙여요 · 이름 붙인 친구 ${namedCount}명, 남은 네모 ${unnamedCount}개`
@@ -426,6 +508,7 @@ export default function CutPeoplePage() {
                 image={image}
                 corners={cut.stageCorners}
                 showCorners={false}
+                onTapImage={handleTapPhoto}
                 onLongPress={handleLongPressPhoto}
               >
                 {(scale) =>
@@ -466,7 +549,7 @@ export default function CutPeoplePage() {
                             x={8}
                             y={-22}
                             fontSize={16}
-                            fontFamily="Jua, sans-serif"
+                            fontFamily={CANVAS_FONT}
                             fill={textColorOn(color)}
                             listening={false}
                           />
@@ -529,6 +612,7 @@ export default function CutPeoplePage() {
               onMoveMark={(key, x, y) => setMoved((prev) => ({ ...prev, [key]: { x, y } }))}
               onSelectMark={(key) => setPicking(key)}
               onLongPressEmpty={(x, y) => addManualSpot({ x, y })}
+              onTapEmpty={(x, y) => placePendingStudent({ x, y })}
             />
             <div className="toolbar">
               <button
@@ -559,6 +643,53 @@ export default function CutPeoplePage() {
             </p>
           </section>
         </div>
+
+        <section className="missing-wrap">
+          <h2 className="section-title">
+            <UserPlus size={20} aria-hidden="true" /> 아직 자리를 안 정한 친구
+          </h2>
+          {missingStudents.length === 0 ? (
+            <p className="hint">모든 친구가 자리를 잡았어요! 👏</p>
+          ) : (
+            <>
+              <p className="hint">
+                앱이 못 찾은 친구는 여기서 이름을 누른 다음, 사진이나 평면도에서 그 친구가 선 자리를
+                한 번 누르면 들어가요.
+              </p>
+              <div className="chip-grid">
+                {missingStudents.map((student) => (
+                  <button
+                    key={student.id}
+                    type="button"
+                    className={`picker-chip${placingStudentId === student.id ? ' is-current' : ''}`}
+                    style={{
+                      background: student.color,
+                      color: textColorOn(student.color),
+                      opacity: placingStudentId && placingStudentId !== student.id ? 0.45 : 1,
+                    }}
+                    onClick={() =>
+                      setPlacingStudentId((prev) => (prev === student.id ? null : student.id))
+                    }
+                    aria-pressed={placingStudentId === student.id}
+                  >
+                    <UserPlus size={18} aria-hidden="true" />
+                    <span className="picker-name">{student.name}</span>
+                  </button>
+                ))}
+              </div>
+              {placingStudentId && (
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => setPlacingStudentId(null)}
+                  style={{ marginTop: 'var(--sp-3)' }}
+                >
+                  그만두기
+                </button>
+              )}
+            </>
+          )}
+        </section>
 
         <button
           type="button"

@@ -11,14 +11,3 @@ export async function askPersistentStorage(): Promise<boolean> {
     return false
   }
 }
-
-/** 지금 쓰고 있는 저장 공간을 알려 준다. (설정 화면 안내용) */
-export async function storageUsage(): Promise<{ usedMB: number; quotaMB: number } | null> {
-  try {
-    if (!navigator.storage?.estimate) return null
-    const { usage = 0, quota = 0 } = await navigator.storage.estimate()
-    return { usedMB: usage / 1024 / 1024, quotaMB: quota / 1024 / 1024 }
-  } catch {
-    return null
-  }
-}

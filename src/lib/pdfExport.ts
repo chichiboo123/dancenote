@@ -1,3 +1,4 @@
+import { CANVAS_FONT } from './canvasFont'
 import { drawStagePlan, type PlanIcon, type PlanTrail } from './planCanvas'
 import type { PlanColors } from './planColors'
 import type { Cut, Project, Student } from '../db/types'
@@ -24,6 +25,7 @@ const PRINT_COLORS: PlanColors = {
   tape: '#B5793F',
   border: '#9C7B4C',
   label: '#55607A',
+  centerMark: '#C4302A',
 }
 
 export interface PdfOptions {
@@ -65,12 +67,12 @@ export async function exportCutsToPdf(
 
     // 머리글
     ctx.fillStyle = '#1F2A44'
-    ctx.font = '40px Jua, sans-serif'
+    ctx.font = `700 40px ${CANVAS_FONT}`
     ctx.textAlign = 'left'
     ctx.textBaseline = 'top'
     ctx.fillText(`${project.title} — 동선표`, MARGIN, MARGIN - 20)
 
-    ctx.font = '22px "Gowun Dodum", sans-serif'
+    ctx.font = `22px ${CANVAS_FONT}`
     ctx.fillStyle = '#55607A'
     ctx.textAlign = 'right'
     ctx.fillText(
@@ -108,7 +110,7 @@ export async function exportCutsToPdf(
 
     // 꼬리말
     ctx.textAlign = 'center'
-    ctx.font = '18px "Gowun Dodum", sans-serif'
+    ctx.font = `18px ${CANVAS_FONT}`
     ctx.fillStyle = '#9AA3B5'
     ctx.fillText('동선노트 · Created by. 교육뮤지컬 꿈꾸는 치수쌤', PAGE_W / 2, PAGE_H - 34)
 
@@ -138,18 +140,18 @@ function drawCutCard(
   ctx.textAlign = 'left'
   ctx.textBaseline = 'top'
   ctx.fillStyle = '#1F2A44'
-  ctx.font = '26px Jua, sans-serif'
+  ctx.font = `700 26px ${CANVAS_FONT}`
   ctx.fillText(`${cutNumber}. ${cut.title}`, rect.x, rect.y)
 
   // 제목·메모 자리는 칸마다 같은 높이로 잡아, 평면도들이 나란히 보이게 한다.
   let textY = rect.y + 34
   if (cut.memo) {
-    ctx.font = '19px "Gowun Dodum", sans-serif'
+    ctx.font = `19px ${CANVAS_FONT}`
     ctx.fillStyle = '#55607A'
     textY = wrapText(ctx, cut.memo, rect.x, textY, rect.width, 24, 2)
   }
   if (cut.video) {
-    ctx.font = '17px "Gowun Dodum", sans-serif'
+    ctx.font = `17px ${CANVAS_FONT}`
     ctx.fillStyle = '#9AA3B5'
     ctx.fillText(`영상 ${formatSec(cut.video.timeSec)}`, rect.x, textY)
   }
@@ -199,7 +201,7 @@ function drawCutCard(
   if (icons.length === 0) {
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
-    ctx.font = '20px "Gowun Dodum", sans-serif'
+    ctx.font = `20px ${CANVAS_FONT}`
     ctx.fillStyle = '#9AA3B5'
     ctx.fillText('아직 이름을 붙이지 않았어요', planX + planW / 2, planY + planH / 2)
     ctx.textAlign = 'left'

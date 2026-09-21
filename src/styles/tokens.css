@@ -26,9 +26,13 @@
   --shadow-md: 0 4px 14px rgba(31, 42, 68, 0.12);
   --shadow-lg: 0 10px 30px rgba(31, 42, 68, 0.18);
 
-  /* --- 글꼴 --- */
-  --font-title: 'Jua', 'Pretendard GOV', 'Pretendard', system-ui, sans-serif;
-  --font-body: 'Gowun Dodum', 'Pretendard GOV', 'Pretendard', system-ui, sans-serif;
+  /* --- 글꼴: Pretendard GOV 기준 --- */
+  --font-stack: 'Pretendard GOV', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    system-ui, sans-serif;
+  --font-title: var(--font-stack);
+  --font-body: var(--font-stack);
+  /* 캔버스(Konva·PDF)에서 쓰는 글꼴 이름 */
+  --font-canvas: 'Pretendard GOV', Pretendard, sans-serif;
 
   /* --- 크기 (어린이 손가락 기준) --- */
   --tap-min: 56px; /* 터치 영역 최소 */

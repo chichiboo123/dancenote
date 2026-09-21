@@ -1,3 +1,4 @@
+import { CANVAS_FONT } from '../lib/canvasFont'
 import { useMemo, useRef, useState } from 'react'
 import { Circle, Group, Image as KImage, Layer, Line, Stage, Text } from 'react-konva'
 import type Konva from 'konva'
@@ -169,7 +170,7 @@ export default function PhotoCanvas({
                   <Text
                     text={String(i + 1)}
                     fontSize={18}
-                    fontFamily="Jua, sans-serif"
+                    fontFamily={CANVAS_FONT}
                     fill="#ffffff"
                     width={40}
                     height={40}

@@ -47,6 +47,7 @@
 
 .logo-text {
   font-family: var(--font-title);
+  font-weight: 700;
   font-size: 24px;
 }
 
@@ -57,6 +58,7 @@
 
 .hero-title {
   font-family: var(--font-title);
+  font-weight: 700;
   font-size: 30px;
   line-height: 1.3;
 }
@@ -199,6 +201,7 @@
 
 .big-action strong {
   font-family: var(--font-title);
+  font-weight: 700;
   font-size: 21px;
   font-weight: 400;
 }
@@ -221,6 +224,7 @@
   background: var(--c-accent);
   color: #43350a;
   font-family: var(--font-title);
+  font-weight: 700;
   font-size: 17px;
 }
 
@@ -238,6 +242,7 @@
 
 .field-label {
   font-family: var(--font-title);
+  font-weight: 700;
   font-size: 18px;
 }
 
@@ -447,6 +452,7 @@
   border: 4px solid #fff;
   box-shadow: var(--shadow-md);
   font-family: var(--font-title);
+  font-weight: 700;
   font-size: 22px;
 }
 
@@ -589,4 +595,68 @@
 
 .help-step li::marker {
   color: var(--c-accent);
+}
+
+
+/* ===== 작은 화면(폰) 다듬기 ===== */
+@media (max-width: 520px) {
+  .app-main {
+    padding: var(--sp-3) var(--sp-3) var(--sp-6);
+  }
+
+  .hero-title {
+    font-size: 26px;
+  }
+
+  /* 큰 동작 버튼은 가로로 눕혀 세 개가 한눈에 들어오게 */
+  .big-action {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: var(--sp-4);
+    min-height: 92px;
+    padding: var(--sp-4) var(--sp-4) var(--sp-4) 56px;
+    text-align: left;
+  }
+  .big-action strong {
+    font-size: 19px;
+  }
+  .big-action > svg {
+    flex: none;
+  }
+  .big-action-no {
+    top: 50%;
+    left: var(--sp-3);
+    margin-top: -16px;
+  }
+
+  /* 공연 만들기 입력 줄 */
+  .size-row {
+    gap: var(--sp-2);
+  }
+
+  /* 이름 넣기 줄: 입력과 버튼을 위아래로 */
+  .add-row {
+    flex-wrap: wrap;
+  }
+  .add-row .btn {
+    flex: 1;
+  }
+
+  /* 대화상자는 아래에서 꽉 차게 */
+  .modal-box {
+    padding: var(--sp-4);
+  }
+  .confirm-actions,
+  .editor-actions {
+    flex-direction: column-reverse;
+  }
+  .confirm-actions .btn,
+  .editor-actions .btn {
+    width: 100%;
+  }
+
+  /* 사용법 카드 */
+  .help-step ul {
+    font-size: 16px;
+  }
 }

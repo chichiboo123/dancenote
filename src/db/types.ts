@@ -1,5 +1,11 @@
 /** 동선노트가 다루는 자료의 모양 */
 
+/** 사진 위의 한 점 (이미지 좌표) */
+export interface Point {
+  x: number
+  y: number
+}
+
 /** 공연(프로젝트) */
 export interface Project {
   id: string
@@ -11,6 +17,13 @@ export interface Project {
   stageDepthM: number
   /** true면 원본 사진을 저장하지 않고 위치만 남긴다 */
   keepPhotos: boolean
+  /**
+   * 이 공연의 기본 무대 영역 (이미지 좌표).
+   * 같은 자리에서 찍은 사진·영상이면 한 번만 정하면 되도록, 새 컷에 자동으로 물려준다.
+   */
+  defaultStageCorners?: [Point, Point, Point, Point]
+  /** 기본 무대 영역을 정할 때 쓴 사진 크기 (크기가 다르면 물려주지 않는다) */
+  defaultStageImageSize?: { width: number; height: number }
   createdAt: number
   updatedAt: number
 }
@@ -49,12 +62,6 @@ export interface UnassignedSpot {
   y: number
   /** 사진 위 사각형 [x, y, 너비, 높이] (이미지 좌표). 직접 넣은 자리는 없을 수 있다. */
   bbox?: [number, number, number, number]
-}
-
-/** 사진 위의 한 점 (이미지 좌표) */
-export interface Point {
-  x: number
-  y: number
 }
 
 /** 한 장면(컷) */

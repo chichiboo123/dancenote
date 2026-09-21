@@ -23,6 +23,12 @@ import { downloadDataUrl, safeFileName } from '../lib/backup'
 import { SPEED_LABELS, SPEED_SECONDS, useViewPrefs, type PlaySpeed } from '../store/viewPrefs'
 import type { Cut, Student } from '../db/types'
 
+/** 0 ~ 마지막 컷 사이로 맞춘다. NaN이 들어와도 0이 된다. */
+function clampIndex(value: number, lastIndex: number): number {
+  if (!Number.isFinite(value)) return 0
+  return Math.min(lastIndex, Math.max(0, value))
+}
+
 /** 시작과 끝을 부드럽게 (가속 → 감속) */
 function ease(t: number) {
   return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2
@@ -53,11 +59,18 @@ export default function PlayPage() {
   const lastTimeRef = useRef(0)
   // 재생 중에는 ref를 기준으로 계산한다. (상태 갱신 함수 안에서 다른 일을 하지 않기 위해)
   const progressRef = useRef(0)
+  // seek()에서 최신 컷 개수를 보려고 따로 담아 둔다.
+  const cutsRef = useRef<Cut[]>([])
 
-  /** 재생 위치를 한 번에 바꾼다. */
+  /**
+   * 재생 위치를 한 번에 바꾼다.
+   * 컷이 지워지거나 못 찾은 경우 이상한 값(-1, NaN)이 들어올 수 있어서 항상 범위 안으로 맞춘다.
+   */
   const seek = useCallback((value: number) => {
-    progressRef.current = value
-    setProgress(value)
+    const max = Math.max(0, cutsRef.current.length - 1)
+    const safe = Number.isFinite(value) ? Math.min(max, Math.max(0, value)) : 0
+    progressRef.current = safe
+    setProgress(safe)
   }, [])
 
   const studentById = useMemo(() => {
@@ -67,6 +80,10 @@ export default function PlayPage() {
   }, [students])
 
   const lastIndex = Math.max(0, cuts.length - 1)
+
+  useEffect(() => {
+    cutsRef.current = cuts
+  }, [cuts])
 
   // 재생 — 화면이 그려질 때마다 조금씩 앞으로 나아간다.
   useEffect(() => {
@@ -108,10 +125,11 @@ export default function PlayPage() {
   /** 지금 이 순간 학생들이 서 있는 자리 */
   const marks: Mark[] = useMemo(() => {
     if (cuts.length === 0) return []
-    const i = Math.min(lastIndex, Math.floor(progress))
+    // 컷이 지워지는 순간 등 어떤 경우에도 없는 컷을 읽지 않도록 범위를 좁힌다.
+    const i = clampIndex(Math.floor(progress), lastIndex)
     const f = ease(Math.min(1, Math.max(0, progress - i)))
-    const a = cuts[i]
-    const b = cuts[Math.min(lastIndex, i + 1)]
+    const a = cuts[i] ?? cuts[0]
+    const b = cuts[clampIndex(i + 1, lastIndex)] ?? a
 
     const ids = new Set<string>([
       ...a.placements.map((p) => p.studentId),
@@ -157,11 +175,11 @@ export default function PlayPage() {
   /** 지나온 길 */
   const trails: Trail[] = useMemo(() => {
     if (!prefs.showTrails || cuts.length < 2) return []
-    const upto = Math.min(lastIndex, Math.floor(progress))
+    const upto = clampIndex(Math.floor(progress), lastIndex)
     return students.flatMap((student) => {
       const points: { x: number; y: number }[] = []
       for (let i = 0; i <= upto; i++) {
-        const p = cuts[i].placements.find((pl) => pl.studentId === student.id)
+        const p = cuts[i]?.placements.find((pl) => pl.studentId === student.id)
         if (p) points.push({ x: p.x, y: p.y })
       }
       const now = marks.find((m) => m.id === student.id)
@@ -201,7 +219,7 @@ export default function PlayPage() {
     )
   }
 
-  const currentCut = cuts[Math.round(progress)]
+  const currentCut = cuts[clampIndex(Math.round(progress), lastIndex)]
 
   return (
     <>
@@ -401,7 +419,8 @@ export default function PlayPage() {
               activeId={currentCut?.id}
               onOpen={(cut) => {
                 setPlaying(false)
-                seek(cuts.findIndex((c) => c.id === cut.id))
+                const index = cuts.findIndex((c) => c.id === cut.id)
+                if (index >= 0) seek(index)
               }}
             />
           </>

@@ -88,7 +88,7 @@ export function ImportProjectButton({ onDone }: { onDone?: (projectId: string) =
     <>
       <button type="button" className="btn btn-ghost" onClick={() => inputRef.current?.click()}>
         <FolderOpen size={22} aria-hidden="true" />
-        백업 파일 불러오기
+        백업 불러오기
       </button>
       <input
         ref={inputRef}

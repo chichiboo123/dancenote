@@ -1,5 +1,7 @@
+import { CANVAS_FONT } from './canvasFont'
 import type { PlanColors } from './planColors'
 import { textColorOn } from './colors'
+import { frontStageMarks } from './stageMarks'
 
 /**
  * 무대 평면도를 그냥 캔버스(2D)에 그린다.
@@ -34,6 +36,8 @@ export interface DrawPlanOptions {
   labels?: boolean
   /** 라벨 글자 크기 */
   labelFontSize?: number
+  /** 무대 앞쪽 센터 기준 번호 표시 */
+  showMarks?: boolean
 }
 
 export function drawStagePlan(ctx: CanvasRenderingContext2D, options: DrawPlanOptions) {
@@ -47,6 +51,7 @@ export function drawStagePlan(ctx: CanvasRenderingContext2D, options: DrawPlanOp
     iconRadius,
     labels = true,
     labelFontSize,
+    showMarks = true,
   } = options
   const { x: ox, y: oy, width: w, height: h } = rect
   const r = iconRadius ?? Math.max(12, w / 16)
@@ -117,15 +122,39 @@ export function drawStagePlan(ctx: CanvasRenderingContext2D, options: DrawPlanOp
   ctx.globalAlpha = 1
   ctx.setLineDash([])
 
+  // 무대 앞쪽 센터 기준 번호 (바닥 테이프 표시)
+  if (showMarks) {
+    const edgeY = flipped ? oy : oy + h
+    const dir = flipped ? -1 : 1
+    const markFont = Math.round((labelFontSize ?? r * 0.9) * 0.62)
+    ctx.textAlign = 'center'
+    for (const mark of frontStageMarks()) {
+      const vx = ox + (flipped ? 1 - mark.x : mark.x) * w
+      const tickLen = mark.center ? h * 0.05 : h * 0.032
+      ctx.beginPath()
+      ctx.moveTo(vx, edgeY - dir * tickLen)
+      ctx.lineTo(vx, edgeY + dir * 3)
+      ctx.strokeStyle = mark.center ? colors.centerMark : colors.tape
+      ctx.lineWidth = mark.center ? 3.5 : 2
+      ctx.lineCap = 'round'
+      ctx.stroke()
+
+      ctx.font = `${mark.center ? '700 ' : ''}${markFont}px ${CANVAS_FONT}`
+      ctx.fillStyle = mark.center ? colors.centerMark : colors.label
+      ctx.textBaseline = flipped ? 'bottom' : 'top'
+      ctx.fillText(mark.label, vx, edgeY + dir * (tickLen + 4) * (flipped ? 1 : 0) + (flipped ? -4 : 5))
+    }
+  }
+
   // 위·아래 라벨
   if (labels) {
     ctx.fillStyle = colors.label
-    ctx.font = `${Math.round(labelFontSize ?? r * 0.9)}px Jua, sans-serif`
+    ctx.font = `700 ${Math.round(labelFontSize ?? r * 0.9)}px ${CANVAS_FONT}`
     ctx.textAlign = 'center'
     ctx.textBaseline = 'bottom'
     ctx.fillText(flipped ? '객석' : '무대 뒤', ox + w / 2, oy - 6)
     ctx.textBaseline = 'top'
-    ctx.fillText(flipped ? '무대 뒤' : '객석', ox + w / 2, oy + h + 6)
+    ctx.fillText(flipped ? '무대 뒤' : '객석', ox + w / 2, oy + h + (showMarks && !flipped ? 26 : 6))
   }
 
   // 학생 아이콘
@@ -140,7 +169,7 @@ export function drawStagePlan(ctx: CanvasRenderingContext2D, options: DrawPlanOp
     ctx.stroke()
 
     ctx.fillStyle = textColorOn(icon.color)
-    ctx.font = `${Math.round(r * 0.72)}px Jua, sans-serif`
+    ctx.font = `700 ${Math.round(r * 0.72)}px ${CANVAS_FONT}`
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
     ctx.fillText(icon.label, v.x, v.y + r * 0.04)

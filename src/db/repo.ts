@@ -1,5 +1,5 @@
 import { db } from './db'
-import type { Cut, Project, Student } from './types'
+import type { Cut, Point, Project, Student } from './types'
 import { pickColor } from '../lib/colors'
 import { makeShortName } from '../lib/names'
 
@@ -99,9 +99,6 @@ export async function restoreStudent(student: Student): Promise<void> {
   await db.students.put(student)
 }
 
-export function countCuts(projectId: string) {
-  return db.cuts.where('projectId').equals(projectId).count()
-}
 
 /* ---------------- 컷 ---------------- */
 
@@ -113,10 +110,18 @@ export function getCut(id: string) {
   return db.cuts.get(id)
 }
 
-/** 가장 마지막 컷 (무대 영역을 물려받을 때 쓴다) */
-export async function lastCut(projectId: string): Promise<Cut | undefined> {
-  const cuts = await listCuts(projectId)
-  return cuts[cuts.length - 1]
+/**
+ * 새 컷이 물려받을 무대 영역을 고른다.
+ * 공연에 저장해 둔 기본 무대 영역을 쓰되, 사진 크기가 다르면 좌표가 맞지 않으므로 쓰지 않는다.
+ */
+function inheritedCorners(
+  project: Project | undefined,
+  image: { width: number; height: number },
+): Cut['stageCorners'] {
+  if (!project?.defaultStageCorners) return undefined
+  const size = project.defaultStageImageSize
+  if (size && (size.width !== image.width || size.height !== image.height)) return undefined
+  return project.defaultStageCorners
 }
 
 /**
@@ -129,7 +134,7 @@ export async function createCutsFromImages(
   source: Cut['source'],
 ): Promise<string[]> {
   const existing = await listCuts(projectId)
-  const previous = existing[existing.length - 1]
+  const project = await db.projects.get(projectId)
   let order = existing.length
   const now = Date.now()
 
@@ -142,7 +147,8 @@ export async function createCutsFromImages(
     source,
     imageBlob: img.blob,
     imageSize: { width: img.width, height: img.height },
-    stageCorners: previous?.stageCorners,
+    // 같은 자리에서 찍었다면 무대 영역을 다시 정하지 않아도 되게 물려받는다.
+    stageCorners: inheritedCorners(project, img),
     placements: [],
     unassigned: [],
     createdAt: now + i,
@@ -208,11 +214,45 @@ export function formatTime(sec: number): string {
   return `${m}:${String(s).padStart(2, '0')}.${tenth}`
 }
 
-/** 이 공연에서 마지막으로 쓴 영상 파일 이름 */
-export async function lastVideoFileName(projectId: string): Promise<string | null> {
+
+/** 이 공연의 기본 무대 영역으로 기억해 둔다. (다음 컷부터 저절로 쓰인다) */
+export async function rememberStageCorners(
+  projectId: string,
+  corners: [Point, Point, Point, Point],
+  imageSize?: { width: number; height: number },
+): Promise<void> {
+  await updateProject(projectId, {
+    defaultStageCorners: corners,
+    defaultStageImageSize: imageSize,
+  })
+}
+
+/**
+ * 무대 영역을 이 공연의 다른 컷에도 그대로 적용한다.
+ * 사진 크기가 같은 컷에만 적용한다. (크기가 다르면 좌표가 어긋난다)
+ * @returns 바뀐 컷 개수
+ */
+export async function applyStageCornersToAllCuts(
+  projectId: string,
+  corners: [Point, Point, Point, Point],
+  imageSize: { width: number; height: number } | undefined,
+  options: { onlyEmpty: boolean },
+): Promise<number> {
   const cuts = await listCuts(projectId)
-  for (let i = cuts.length - 1; i >= 0; i--) {
-    if (cuts[i].video?.fileName) return cuts[i].video!.fileName
+  let changed = 0
+  for (const cut of cuts) {
+    if (options.onlyEmpty && cut.stageCorners) continue
+    if (
+      imageSize &&
+      cut.imageSize &&
+      (cut.imageSize.width !== imageSize.width || cut.imageSize.height !== imageSize.height)
+    ) {
+      continue
+    }
+    if (JSON.stringify(cut.stageCorners) === JSON.stringify(corners)) continue
+    await db.cuts.update(cut.id, { stageCorners: corners, updatedAt: Date.now() })
+    changed += 1
   }
-  return null
+  if (changed > 0) await updateProject(projectId, {})
+  return changed
 }

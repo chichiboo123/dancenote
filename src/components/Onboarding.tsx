@@ -1,3 +1,4 @@
+import { CANVAS_FONT } from '../lib/canvasFont'
 import { useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { markOnboardingSeen } from '../lib/onboardingSeen'
@@ -120,7 +121,7 @@ function ArtCorners() {
             textAnchor="middle"
             fill="#fff"
             fontSize="17"
-            fontFamily="Jua, sans-serif"
+            fontFamily={CANVAS_FONT}
           >
             {n}
           </text>
@@ -144,11 +145,11 @@ function ArtRoute() {
         strokeLinecap="round"
       />
       <circle cx="70" cy="96" r="19" fill="#E69F00" stroke="#fff" strokeWidth="4" />
-      <text x="70" y="103" textAnchor="middle" fill="#1A1A1A" fontSize="16" fontFamily="Jua, sans-serif">
+      <text x="70" y="103" textAnchor="middle" fill="#1A1A1A" fontSize="16" fontFamily={CANVAS_FONT}>
         서준
       </text>
       <circle cx="172" cy="52" r="19" fill="#0072B2" stroke="#fff" strokeWidth="4" />
-      <text x="172" y="59" textAnchor="middle" fill="#fff" fontSize="16" fontFamily="Jua, sans-serif">
+      <text x="172" y="59" textAnchor="middle" fill="#fff" fontSize="16" fontFamily={CANVAS_FONT}>
         하윤
       </text>
     </svg>
