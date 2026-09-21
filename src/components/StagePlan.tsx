@@ -15,6 +15,17 @@ export interface Mark {
   label: string
   /** 흐리게 보일지 (다른 학생 따라가기 등) */
   faded?: boolean
+  /** 0~1. 컷 사이에서 나타나거나 사라질 때 쓴다. */
+  opacity?: number
+}
+
+/** 한 사람이 지나온 길 */
+export interface Trail {
+  id: string
+  color: string
+  /** 무대 좌표 0~1 점들 */
+  points: { x: number; y: number }[]
+  faded?: boolean
 }
 
 interface Props {
@@ -24,6 +35,13 @@ interface Props {
   /** 이전 컷 위치 (흐린 아이콘 + 점선 화살표) */
   ghosts?: Mark[]
   showGrid?: boolean
+  /**
+   * 무대를 반대쪽에서 보기.
+   * 끄면 객석에서 본 모습(아래가 객석), 켜면 무대 위에서 객석을 바라본 모습(아래가 무대 뒤).
+   */
+  flipped?: boolean
+  /** 지나온 길(점선) */
+  trails?: Trail[]
   /** 아이콘을 끌어 옮겼을 때 (무대 좌표 0~1) */
   onMoveMark?: (id: string, x: number, y: number) => void
   /** 빈 곳을 길게 눌렀을 때 */
@@ -43,6 +61,8 @@ export default function StagePlan({
   marks,
   ghosts = [],
   showGrid = false,
+  flipped = false,
+  trails = [],
   onMoveMark,
   onLongPressEmpty,
   onSelectMark,
@@ -57,18 +77,23 @@ export default function StagePlan({
   const floorH = floorW * ratio
   const viewH = floorH + PAD * 2
 
-  /** 무대 좌표(0~1) → 화면 좌표 */
+  /**
+   * 무대 좌표(0~1) → 화면 좌표.
+   * 반대쪽에서 볼 때는 무대를 180도 돌려 본 것과 같으므로 좌우·앞뒤가 모두 뒤집힌다.
+   */
   const toView = useMemo(
-    () => (x: number, y: number) => ({ x: PAD + x * floorW, y: PAD + y * floorH }),
-    [floorW, floorH],
+    () => (x: number, y: number) => ({
+      x: PAD + (flipped ? 1 - x : x) * floorW,
+      y: PAD + (flipped ? 1 - y : y) * floorH,
+    }),
+    [floorW, floorH, flipped],
   )
 
   /** 화면 좌표 → 무대 좌표(0~1) */
   function toStage(px: number, py: number) {
-    return {
-      x: Math.min(1, Math.max(0, (px - PAD) / floorW)),
-      y: Math.min(1, Math.max(0, (py - PAD) / floorH)),
-    }
+    const vx = Math.min(1, Math.max(0, (px - PAD) / floorW))
+    const vy = Math.min(1, Math.max(0, (py - PAD) / floorH))
+    return { x: flipped ? 1 - vx : vx, y: flipped ? 1 - vy : vy }
   }
 
   // 나뭇결 무늬 (마루판 느낌)
@@ -178,7 +203,7 @@ export default function StagePlan({
 
             {/* 라벨: 위쪽 무대 뒤, 아래쪽 객석 */}
             <Text
-              text="무대 뒤"
+              text={flipped ? '객석' : '무대 뒤'}
               x={PAD}
               y={8}
               width={floorW}
@@ -188,7 +213,7 @@ export default function StagePlan({
               fill={colors.label}
             />
             <Text
-              text="객석"
+              text={flipped ? '무대 뒤' : '객석'}
               x={PAD}
               y={PAD + floorH + 8}
               width={floorW}
@@ -206,6 +231,28 @@ export default function StagePlan({
               fontSize={13}
               fill={colors.label}
             />
+          </Layer>
+
+          {/* 지나온 길 */}
+          <Layer listening={false}>
+            {trails
+              .filter((t) => t.points.length >= 2)
+              .map((t) => (
+                <Line
+                  key={`trail-${t.id}`}
+                  points={t.points.flatMap((p) => {
+                    const v = toView(p.x, p.y)
+                    return [v.x, v.y]
+                  })}
+                  stroke={t.color}
+                  strokeWidth={3}
+                  dash={[9, 7]}
+                  lineCap="round"
+                  lineJoin="round"
+                  opacity={t.faded ? 0.18 : 0.7}
+                  tension={0.25}
+                />
+              ))}
           </Layer>
 
           {/* 이전 컷 자리 (흐린 아이콘 + 점선 화살표) */}
@@ -251,7 +298,7 @@ export default function StagePlan({
                   x={pos.x}
                   y={pos.y}
                   draggable={Boolean(onMoveMark)}
-                  opacity={m.faded ? 0.3 : 1}
+                  opacity={(m.opacity ?? 1) * (m.faded ? 0.28 : 1)}
                   onClick={() => onSelectMark?.(m.id)}
                   onTap={() => onSelectMark?.(m.id)}
                   onDragMove={(e) => {

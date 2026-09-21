@@ -3,7 +3,16 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Group, Rect, Text } from 'react-konva'
 import type Konva from 'konva'
-import { Check, Grid3x3, ImageDown, Loader2, MapPin, RefreshCw, Users } from 'lucide-react'
+import {
+  Check,
+  FlipVertical2,
+  Grid3x3,
+  ImageDown,
+  Loader2,
+  MapPin,
+  RefreshCw,
+  Users,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import AppHeader from '../components/AppHeader'
 import PhotoCanvas from '../components/PhotoCanvas'
@@ -18,6 +27,7 @@ import { textColorOn } from '../lib/colors'
 import { useAutoSave } from '../lib/useAutoSave'
 import { downloadDataUrl, safeFileName } from '../lib/backup'
 import { josa } from '../lib/names'
+import { useViewPrefs } from '../store/viewPrefs'
 import type { Point, Student } from '../db/types'
 
 /** 인식으로 찾은 네모 하나 */
@@ -66,8 +76,8 @@ export default function CutPeoplePage() {
   const [detecting, setDetecting] = useState(false)
   const [detectError, setDetectError] = useState<string | null>(null)
   const [picking, setPicking] = useState<string | null>(null)
-  const [showGrid, setShowGrid] = useState(true)
   const [pane, setPane] = useState<'photo' | 'plan'>('photo')
+  const prefs = useViewPrefs()
   const restoredRef = useRef<string | null>(null)
   const planStageRef = useRef<Konva.Stage | null>(null)
 
@@ -513,7 +523,8 @@ export default function CutPeoplePage() {
               stageDepthM={project.stageDepthM}
               marks={planMarks}
               ghosts={ghosts}
-              showGrid={showGrid}
+              showGrid={prefs.showGrid}
+              flipped={prefs.flipped}
               stageRef={planStageRef}
               onMoveMark={(key, x, y) => setMoved((prev) => ({ ...prev, [key]: { x, y } }))}
               onSelectMark={(key) => setPicking(key)}
@@ -522,11 +533,21 @@ export default function CutPeoplePage() {
             <div className="toolbar">
               <button
                 type="button"
-                className={`btn btn-ghost${showGrid ? ' is-on' : ''}`}
-                onClick={() => setShowGrid((v) => !v)}
-                aria-pressed={showGrid}
+                className={`btn btn-ghost${prefs.showGrid ? ' is-on' : ''}`}
+                onClick={() => prefs.set({ showGrid: !prefs.showGrid })}
+                aria-pressed={prefs.showGrid}
               >
                 <Grid3x3 size={22} aria-hidden="true" />9구역 선
+              </button>
+              <button
+                type="button"
+                className={`btn btn-ghost${prefs.flipped ? ' is-on' : ''}`}
+                onClick={() => prefs.set({ flipped: !prefs.flipped })}
+                aria-pressed={prefs.flipped}
+                title="무대를 반대쪽에서 봐요"
+              >
+                <FlipVertical2 size={22} aria-hidden="true" />
+                {prefs.flipped ? '무대에서 본 모습' : '객석에서 본 모습'}
               </button>
               <button type="button" className="btn btn-ghost" onClick={savePlanImage}>
                 <ImageDown size={22} aria-hidden="true" />

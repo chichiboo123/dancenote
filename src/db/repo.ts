@@ -173,3 +173,11 @@ export async function dropPhotoIfNeeded(cutId: string): Promise<void> {
     await db.cuts.update(cutId, { imageBlob: undefined })
   }
 }
+
+/** 컷 순서를 통째로 다시 매긴다. (타임라인에서 끌어 옮겼을 때) */
+export async function reorderCuts(projectId: string, orderedIds: string[]): Promise<void> {
+  await db.transaction('rw', db.cuts, db.projects, async () => {
+    await Promise.all(orderedIds.map((cutId, index) => db.cuts.update(cutId, { order: index })))
+  })
+  await updateProject(projectId, {})
+}

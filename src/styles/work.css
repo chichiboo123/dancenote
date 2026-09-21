@@ -140,70 +140,165 @@
   display: block;
 }
 
-/* --- 컷 목록 --- */
-.cut-strip-wrap {
+/* --- 컷 타임라인 --- */
+.timeline-wrap {
   margin-top: var(--sp-5);
 }
 
-.cut-strip {
+.timeline-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.timeline-head .hint {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  font-size: 14px;
+  color: var(--c-ink-soft);
+}
+
+.timeline {
   list-style: none;
   display: flex;
-  gap: var(--sp-3);
-  padding: 0 0 var(--sp-2);
+  gap: 12px;
+  padding: 0 0 var(--sp-3);
   margin: 0;
   overflow-x: auto;
   scroll-snap-type: x proximity;
 }
 
-.cut-strip li {
+.timeline-item {
+  position: relative;
+  flex: none;
+  width: 172px;
   scroll-snap-align: start;
+  transition: transform 0.15s ease;
 }
 
-.cut-thumb {
+.timeline-item.is-dragging {
+  transform: scale(1.04);
+  z-index: 2;
+}
+
+.timeline-card {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  width: 168px;
+  width: 100%;
   padding: var(--sp-2);
-  border: 2px solid var(--c-border);
+  border: 3px solid var(--c-border);
   border-radius: var(--r-md);
   background: var(--c-surface);
-  text-decoration: none;
   color: inherit;
+  text-align: left;
+  cursor: grab;
+  box-shadow: var(--shadow-sm);
+  touch-action: pan-y; /* 가로로 끌면 순서 바꾸기 */
+}
+
+.timeline-card:active {
+  cursor: grabbing;
+}
+
+.timeline-item.is-active .timeline-card {
+  border-color: var(--c-primary);
+  box-shadow: var(--shadow-md);
+}
+
+.timeline-no {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-pill);
+  background: var(--c-accent);
+  color: #43350a;
+  font-family: var(--font-title);
+  font-size: 16px;
   box-shadow: var(--shadow-sm);
 }
 
-.cut-thumb:hover {
-  border-color: var(--c-primary);
-}
-
-.cut-thumb-img {
+.timeline-img {
   width: 100%;
   aspect-ratio: 4 / 3;
   object-fit: cover;
   border-radius: var(--r-sm);
   background: var(--c-surface-2);
+  pointer-events: none;
 }
 
-.cut-thumb-empty {
+.timeline-img-empty {
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--c-ink-soft);
 }
 
-.cut-thumb-title {
+.timeline-title {
   font-family: var(--font-title);
   font-size: 17px;
   margin-top: var(--sp-1);
 }
 
-.cut-thumb-meta {
+.timeline-meta {
   display: flex;
   align-items: center;
   gap: 4px;
   font-size: 13px;
   color: var(--c-ink-soft);
+}
+
+.timeline-memo {
+  font-size: 13px;
+  color: var(--c-ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timeline-actions {
+  position: absolute;
+  top: var(--sp-2);
+  right: var(--sp-2);
+  display: flex;
+  gap: 4px;
+}
+
+.timeline-actions .btn {
+  min-height: 40px;
+  min-width: 40px;
+  padding: 6px;
+  color: var(--c-ink-soft);
+}
+
+/* --- 재생 조작 --- */
+.play-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  padding: var(--sp-3);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  border: 2px solid var(--c-border);
+}
+
+.play-button {
+  min-width: 170px;
+}
+
+.play-slider {
+  flex: 1;
+  min-width: 180px;
 }
 
 /* 불러오는 중 빙글빙글 */

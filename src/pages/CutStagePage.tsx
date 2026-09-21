@@ -22,6 +22,7 @@ import { CORNER_LABELS, createStageMapper, isValidQuad } from '../lib/homography
 import type { Point } from '../db/types'
 import { josa } from '../lib/names'
 import { useAutoSave } from '../lib/useAutoSave'
+import { useViewPrefs } from '../store/viewPrefs'
 
 /** 확인용으로 찍어 보는 점 (저장되지 않는다) */
 interface TestMark extends Point {
@@ -48,7 +49,7 @@ export default function CutStagePage() {
   const [image, setImage] = useState<HTMLImageElement | null>(null)
   const [corners, setCorners] = useState<Point[]>([])
   const [testMarks, setTestMarks] = useState<TestMark[]>([])
-  const [showGrid, setShowGrid] = useState(true)
+  const prefs = useViewPrefs()
   const [pane, setPane] = useState<'photo' | 'plan'>('photo')
   const [confirmDelete, setConfirmDelete] = useState(false)
   const loadedCutRef = useRef<string | null>(null)
@@ -278,14 +279,15 @@ export default function CutStagePage() {
               stageWidthM={project.stageWidthM}
               stageDepthM={project.stageDepthM}
               marks={planMarks}
-              showGrid={showGrid}
+              showGrid={prefs.showGrid}
+              flipped={prefs.flipped}
             />
             <div className="toolbar">
               <button
                 type="button"
-                className={`btn btn-ghost${showGrid ? ' is-on' : ''}`}
-                onClick={() => setShowGrid((v) => !v)}
-                aria-pressed={showGrid}
+                className={`btn btn-ghost${prefs.showGrid ? ' is-on' : ''}`}
+                onClick={() => prefs.set({ showGrid: !prefs.showGrid })}
+                aria-pressed={prefs.showGrid}
               >
                 <Grid3x3 size={22} aria-hidden="true" />9구역 선
               </button>

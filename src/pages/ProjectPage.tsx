@@ -1,7 +1,7 @@
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Camera, Pencil, PlayCircle, Users } from 'lucide-react'
-import CutStrip from '../components/CutStrip'
+import CutTimeline from '../components/CutTimeline'
 import { ExportProjectButton } from '../components/BackupButtons'
 import AppHeader from '../components/AppHeader'
 import StudentChip from '../components/StudentChip'
@@ -83,15 +83,27 @@ export default function ProjectPage() {
             <span>{cuts.length > 0 ? `컷 ${cuts.length}개` : '사진을 가져와요'}</span>
           </Link>
 
-          <button type="button" className="big-action" disabled>
+          <Link className="big-action" to={`/project/${id}/play`}>
             <span className="big-action-no">3</span>
             <PlayCircle size={40} aria-hidden="true" />
-            <strong>동선 재생·내보내기</strong>
-            <span className="soon">다음 단계에서 만들어요</span>
-          </button>
+            <strong>동선 재생</strong>
+            <span>{cuts.length >= 2 ? '컷을 이어서 봐요' : '컷이 2개 이상이면 볼 수 있어요'}</span>
+          </Link>
         </div>
 
-        {cuts.length > 0 && <CutStrip projectId={id} cuts={cuts} />}
+        {cuts.length > 0 && (
+          <CutTimeline
+            projectId={id}
+            cuts={cuts}
+            onOpen={(cut) =>
+              navigate(
+                cut.stageCorners
+                  ? `/project/${id}/cut/${cut.id}/people`
+                  : `/project/${id}/cut/${cut.id}/stage`,
+              )
+            }
+          />
+        )}
 
         {students.length > 0 && (
           <section className="roster-preview">
