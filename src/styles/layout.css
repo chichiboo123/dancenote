@@ -470,3 +470,123 @@
   border-color: var(--c-ink);
   transform: scale(1.08);
 }
+
+/* --- 처음 쓰는 사람을 위한 그림 안내 --- */
+.onboarding {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-4);
+  background: rgba(20, 26, 43, 0.6);
+}
+
+.onboarding-box {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  padding: var(--sp-5);
+  border-radius: var(--r-lg);
+  background: var(--c-bg);
+  border: 3px solid var(--c-border-strong);
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+  animation: pop-in 0.25s ease-out;
+}
+
+.onboarding-art svg {
+  width: 100%;
+  height: auto;
+  border-radius: var(--r-md);
+}
+
+.onboarding-box h2 {
+  margin-top: var(--sp-4);
+  font-size: 24px;
+}
+
+.onboarding-box p {
+  margin-top: var(--sp-2);
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--c-ink-soft);
+}
+
+.onboarding-dots {
+  display: flex;
+  justify-content: center;
+  gap: var(--sp-2);
+  margin: var(--sp-4) 0;
+}
+
+.onboarding-dots span {
+  width: 12px;
+  height: 12px;
+  border-radius: var(--r-pill);
+  background: var(--c-border-strong);
+}
+
+.onboarding-dots span.is-on {
+  background: var(--c-primary);
+  transform: scale(1.2);
+}
+
+.onboarding-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.onboarding-skip {
+  margin-top: var(--sp-3);
+  background: none;
+  border: none;
+  color: var(--c-ink-soft);
+  font-size: 15px;
+  text-decoration: underline;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+/* --- 사용법 --- */
+.help-steps {
+  list-style: none;
+  padding: 0;
+  margin: var(--sp-5) 0 var(--sp-5);
+  display: grid;
+  gap: var(--sp-4);
+}
+
+@media (min-width: 820px) {
+  .help-steps {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.help-step-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  color: var(--c-primary);
+}
+
+.help-step-head h3 {
+  color: var(--c-ink);
+}
+
+.help-step ul {
+  margin: var(--sp-3) 0 0;
+  padding-left: 1.2em;
+  display: grid;
+  gap: var(--sp-2);
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--c-ink-soft);
+}
+
+.help-step li::marker {
+  color: var(--c-accent);
+}

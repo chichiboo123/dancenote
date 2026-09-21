@@ -92,7 +92,7 @@ export default function NewCutPage() {
             <button type="button" className="big-action" onClick={() => cameraRef.current?.click()}>
               <Camera size={40} aria-hidden="true" />
               <strong>사진 찍기</strong>
-              <span>지금 바로 촬영해요</span>
+              <span>지금 바로 찍어요</span>
             </button>
 
             <button type="button" className="big-action" onClick={() => pickRef.current?.click()}>

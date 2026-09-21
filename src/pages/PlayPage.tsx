@@ -16,6 +16,7 @@ import { toast } from 'sonner'
 import AppHeader from '../components/AppHeader'
 import StagePlan, { type Mark, type Trail } from '../components/StagePlan'
 import CutTimeline from '../components/CutTimeline'
+import PdfExportButton from '../components/PdfExportButton'
 import { db } from '../db/db'
 import { textColorOn } from '../lib/colors'
 import { downloadDataUrl, safeFileName } from '../lib/backup'
@@ -354,6 +355,7 @@ export default function PlayPage() {
                 <ImageDown size={22} aria-hidden="true" />
                 그림으로 저장
               </button>
+              <PdfExportButton projectId={id} />
             </div>
 
             {/* 한 친구만 따라가기 */}

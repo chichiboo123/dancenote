@@ -56,7 +56,26 @@
 - 열리지 않는 영상(아이폰 HEVC 등)이면 쉬운 안내가 나옵니다 —
   *설정 → 카메라 → 포맷 → '호환성 우선'*
 
-8. *(다음 단계에서 추가됩니다)* PDF 동선표 → PWA 설치 → 첫 사용 안내
+8. **내보내기** — 평면도를 **PNG 그림**으로, 전체 컷을 **동선표 PDF**(한 장에 4컷 또는 6컷)로,
+   공연 전체를 **JSON 백업 파일**로 저장할 수 있어요.
+
+### 처음 쓰는 사람에게
+
+- 앱을 처음 열면 **그림 안내 3장**이 나옵니다. (건너뛰기 가능)
+- 첫 화면의 **사용법 보기**에서 7단계 설명을 다시 볼 수 있습니다. 초등학생이 혼자 읽고 따라 할 수
+  있도록 짧은 문장과 쉬운 말로 적었습니다.
+- 모든 화면 오른쪽 위의 **?** 버튼을 누르면 그 화면에서 할 일을 알려 줍니다.
+
+### 앱처럼 설치하고 오프라인으로 쓰기
+
+동선노트는 PWA입니다. 홈 화면에 추가하면 앱처럼 열리고, 인터넷이 없어도 동작합니다.
+
+1. 첫 화면의 **오프라인 준비**를 눌러, 사람 찾기 파일(약 30MB)을 미리 받아 둡니다.
+   (와이파이가 잘 되는 곳에서 한 번만 하면 됩니다)
+2. 홈 화면에 추가합니다.
+   - 아이패드 사파리: **공유 → 홈 화면에 추가**
+   - 안드로이드 크롬: **메뉴 → 앱 설치**
+3. 비행기 모드에서도 사진 인식까지 그대로 동작합니다.
 
 ## 💾 자료는 어떻게 저장되나요?
 
@@ -80,13 +99,15 @@
 ### 밖으로 꺼내기
 
 - **평면도 → PNG 그림**: 이름 붙이기 화면과 동선 재생 화면의 `그림으로 저장` (2배 해상도)
+- **전체 컷 → 동선표 PDF**: 공연 화면·재생 화면의 `동선표 PDF`
+  (A4 가로, 한 장에 4컷 또는 6컷, 컷 제목·메모·이동 경로 포함)
 - **공연 전체 → JSON 백업 파일**: 공연 화면의 `백업 파일로 저장`
   (사진은 파일이 아주 커지므로 선택해서 담습니다)
 - **백업 불러오기**: 첫 화면의 `백업 파일 불러오기` — 기존 공연을 덮어쓰지 않고 새 공연으로 들어갑니다.
 - 내려받는 파일 이름은 영문입니다. 한글 파일 이름을 `download`(확장자 없음)로 바꿔 버리는
   브라우저가 있어서, 다시 불러오지 못하는 일을 막기 위해서입니다.
   공연 이름은 파일 **안에** 그대로 들어 있어 불러오면 한글 제목이 그대로 나옵니다.
-- PDF 동선표는 6단계에서 추가됩니다.
+
 
 ## 개발 현황
 
@@ -97,7 +118,7 @@
 | 3 | 사람 인식(MediaPipe) + 이름 붙이기 + 저장/백업 | ✅ 완료 |
 | 4 | 컷 타임라인 + 동선 재생 + 무대 반대쪽 보기 | ✅ 완료 |
 | 5 | 영상 입력 + 프레임 캡처 | ✅ 완료 |
-| 6 | PDF 내보내기, PWA, 첫 사용 안내, 배포 마무리 | ⏳ 예정 |
+| 6 | PDF 내보내기, PWA, 첫 사용 안내, 배포 마무리 | ✅ 완료 |
 
 ## 개발 환경
 
@@ -142,13 +163,15 @@ npm run lint    # 문법 검사
 | sonner | 안내 토스트 | MIT | https://sonner.emilkowal.ski |
 | Lucide React | 아이콘 | ISC | https://lucide.dev |
 | Konva · react-konva | 캔버스·드래그(터치 지원) | MIT | https://konvajs.org |
+| jsPDF | 동선표 PDF 만들기 | MIT | https://github.com/parallax/jsPDF |
+| vite-plugin-pwa · Workbox | 홈 화면 설치·오프라인 | MIT | https://vite-pwa-org.netlify.app |
 | MediaPipe Tasks Vision | 사람(형태) 인식 | Apache-2.0 | https://ai.google.dev/edge/mediapipe |
 | EfficientDet-Lite0 (.tflite) | 사람 인식 모델 | Apache-2.0 | https://ai.google.dev/edge/mediapipe/solutions/vision/object_detector |
 | oxlint | 문법 검사 | MIT | https://oxc.rs |
 | Jua · Gowun Dodum | 글꼴 | SIL Open Font License 1.1 | https://fonts.google.com |
 | Material Icons Outlined | 푸터 아이콘 | Apache-2.0 | https://fonts.google.com/icons |
 
-다음 단계에서 추가될 예정인 오픈소스: jsPDF(MIT), vite-plugin-pwa(MIT).
+
 
 > **원근 → 평면 변환은 직접 구현했습니다.** 처음에는 `perspective-transform`(npm)을 쓰려고 했지만,
 > 이 패키지는 옛 UMD 방식이라 모듈 최상단에서 `this.numeric = …` 을 실행합니다.

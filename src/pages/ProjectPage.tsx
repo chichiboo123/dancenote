@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { Camera, Pencil, PlayCircle, Users } from 'lucide-react'
 import CutTimeline from '../components/CutTimeline'
 import { ExportProjectButton } from '../components/BackupButtons'
+import PdfExportButton from '../components/PdfExportButton'
 import AppHeader from '../components/AppHeader'
 import StudentChip from '../components/StudentChip'
 import { db } from '../db/db'
@@ -64,6 +65,7 @@ export default function ProjectPage() {
               <Pencil size={22} aria-hidden="true" />
               공연 정보 고치기
             </Link>
+            <PdfExportButton projectId={id} />
             <ExportProjectButton projectId={id} />
           </div>
         </section>

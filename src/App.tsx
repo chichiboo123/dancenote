@@ -7,6 +7,7 @@ import ProjectFormPage from './pages/ProjectFormPage'
 import ProjectPage from './pages/ProjectPage'
 import RosterPage from './pages/RosterPage'
 import NewCutPage from './pages/NewCutPage'
+import HelpPage from './pages/HelpPage'
 
 // 캔버스(Konva)는 무거워서, 작업 화면에 들어갈 때만 불러온다.
 const CutStagePage = lazy(() => import('./pages/CutStagePage'))
@@ -21,6 +22,7 @@ export default function App() {
       <div className="app-shell">
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/help" element={<HelpPage />} />
           <Route path="/project/new" element={<ProjectFormPage />} />
           <Route path="/project/:id" element={<ProjectPage />} />
           <Route path="/project/:id/edit" element={<ProjectFormPage />} />

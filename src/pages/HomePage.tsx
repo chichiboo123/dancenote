@@ -1,10 +1,13 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Plus, Trash2, Users, ShieldCheck, Clapperboard } from 'lucide-react'
+import { BookOpen, Clapperboard, Plus, ShieldCheck, Trash2, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import AppHeader from '../components/AppHeader'
 import { ImportProjectButton } from '../components/BackupButtons'
+import Onboarding from '../components/Onboarding'
+import OfflineReadyButton from '../components/OfflineReadyButton'
+import { hasSeenOnboarding } from '../lib/onboardingSeen'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { db } from '../db/db'
 import { deleteProject } from '../db/repo'
@@ -21,6 +24,8 @@ function formatDate(ms: number) {
 export default function HomePage() {
   const navigate = useNavigate()
   const [toDelete, setToDelete] = useState<Project | null>(null)
+  // 처음 온 사람에게는 그림 안내를 먼저 보여 준다.
+  const [showOnboarding, setShowOnboarding] = useState(() => !hasSeenOnboarding())
 
   const projects = useLiveQuery(() => db.projects.orderBy('updatedAt').reverse().toArray(), [], [])
   const studentCounts = useLiveQuery(
@@ -86,7 +91,12 @@ export default function HomePage() {
         </button>
 
         <div className="toolbar">
+          <Link className="btn btn-ghost" to="/help">
+            <BookOpen size={22} aria-hidden="true" />
+            사용법 보기
+          </Link>
           <ImportProjectButton onDone={(projectId) => navigate(`/project/${projectId}`)} />
+          <OfflineReadyButton />
         </div>
 
         <h2 className="section-title">내 공연</h2>
@@ -124,6 +134,8 @@ export default function HomePage() {
           </ul>
         )}
       </main>
+
+      {showOnboarding && <Onboarding onClose={() => setShowOnboarding(false)} />}
 
       {toDelete && (
         <ConfirmDialog

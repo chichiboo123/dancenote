@@ -482,7 +482,7 @@ export default function CutPeoplePage() {
             )}
 
             <div className="field">
-              <label htmlFor="sens">사람 찾기 민감도</label>
+              <label htmlFor="sens">사람을 얼마나 많이 찾을까요?</label>
               <input
                 id="sens"
                 className="slider"
