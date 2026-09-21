@@ -1,0 +1,223 @@
+/* ===== 작업 화면(사진 · 평면도) ===== */
+
+.work-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+/* 지금 할 일을 알려 주는 띠 */
+.guide-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--c-accent);
+  color: #43350a;
+  font-family: var(--font-title);
+  font-size: 19px;
+  line-height: 1.4;
+  box-shadow: var(--shadow-sm);
+}
+
+.guide-bar svg {
+  flex: none;
+}
+
+/* 좁은 화면: 탭으로 바꿔 보기 / 넓은 화면: 좌우 나란히 */
+.pane-tabs {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.pane-tabs .btn.is-on {
+  background: var(--c-primary-soft);
+  border-color: var(--c-primary);
+}
+
+.work-split {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-4);
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.pane[data-active='false'] {
+  display: none;
+}
+
+@media (min-width: 900px) {
+  .pane-tabs {
+    display: none;
+  }
+  .work-split {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+  .pane[data-active='false'] {
+    display: flex;
+  }
+}
+
+/* --- 사진 캔버스 --- */
+.photo-canvas {
+  position: relative;
+  width: 100%;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--c-surface-2);
+  border: 2px solid var(--c-border);
+  touch-action: none; /* 점을 끌 때 화면이 같이 움직이지 않게 */
+  user-select: none;
+}
+
+.photo-canvas canvas {
+  display: block;
+}
+
+/* --- 돋보기 --- */
+.magnifier {
+  position: absolute;
+  top: var(--sp-3);
+  border-radius: var(--r-pill);
+  border: 4px solid #fff;
+  box-shadow: var(--shadow-lg);
+  background-repeat: no-repeat;
+  background-color: var(--c-surface);
+  pointer-events: none;
+  overflow: hidden;
+  image-rendering: auto;
+}
+
+.magnifier-left {
+  left: var(--sp-3);
+}
+
+.magnifier-right {
+  right: var(--sp-3);
+}
+
+.magnifier-cross {
+  position: absolute;
+  background: rgba(255, 107, 74, 0.9);
+}
+
+.magnifier-cross-h {
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  margin-top: -1px;
+}
+
+.magnifier-cross-v {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  margin-left: -1px;
+}
+
+/* --- 무대 평면도 --- */
+.stage-plan {
+  width: 100%;
+  border-radius: var(--r-md);
+  background: var(--c-surface);
+  border: 2px solid var(--c-border);
+  padding: var(--sp-2);
+  touch-action: none;
+  user-select: none;
+}
+
+.stage-plan canvas {
+  display: block;
+}
+
+/* --- 컷 목록 --- */
+.cut-strip-wrap {
+  margin-top: var(--sp-5);
+}
+
+.cut-strip {
+  list-style: none;
+  display: flex;
+  gap: var(--sp-3);
+  padding: 0 0 var(--sp-2);
+  margin: 0;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+}
+
+.cut-strip li {
+  scroll-snap-align: start;
+}
+
+.cut-thumb {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 168px;
+  padding: var(--sp-2);
+  border: 2px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: var(--c-surface);
+  text-decoration: none;
+  color: inherit;
+  box-shadow: var(--shadow-sm);
+}
+
+.cut-thumb:hover {
+  border-color: var(--c-primary);
+}
+
+.cut-thumb-img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--r-sm);
+  background: var(--c-surface-2);
+}
+
+.cut-thumb-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c-ink-soft);
+}
+
+.cut-thumb-title {
+  font-family: var(--font-title);
+  font-size: 17px;
+  margin-top: var(--sp-1);
+}
+
+.cut-thumb-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--c-ink-soft);
+}
+
+/* 불러오는 중 빙글빙글 */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+.btn.is-on {
+  background: var(--c-primary-soft);
+  border-color: var(--c-primary);
+}

@@ -24,15 +24,20 @@
 1. **새 공연 만들기** — 공연 이름과 무대 크기(가로·세로 m)를 정합니다.
 2. **친구 명단 넣기** — 한 명씩 넣거나, 엑셀에서 복사한 이름을 한 번에 붙여넣습니다.
    이름마다 서로 잘 구분되는 색이 자동으로 배정되고, 칩을 누르면 색·배역을 바꿀 수 있습니다.
-3. *(다음 단계에서 추가됩니다)* 사진 찍기 / 사진·영상 올리기 → 무대 네 귀퉁이 지정 →
-   사람 인식 → 이름 붙이기 → 컷 저장 → 동선 재생 → PNG·PDF·JSON 내보내기
+3. **컷 기록하기** — 사진을 찍거나 올립니다. 여러 장을 한 번에 고르면 고른 순서대로 컷이 됩니다.
+4. **무대 영역 정하기** — 사진 위에서 무대 네 귀퉁이를
+   ① 무대 뒤 왼쪽 → ② 무대 뒤 오른쪽 → ③ 무대 앞 오른쪽 → ④ 무대 앞 왼쪽 순서로 누릅니다.
+   누르는 동안 돋보기가 떠서 정확하게 찍을 수 있고, 찍은 점은 끌어서 옮길 수 있습니다.
+   다 정하면 사진의 아무 곳이나 눌러 평면도에서 같은 자리가 맞는지 확인할 수 있습니다.
+   다음 컷부터는 이전 컷의 무대 영역을 그대로 물려받습니다.
+5. *(다음 단계에서 추가됩니다)* 사람 인식 → 이름 붙이기 → 동선 재생 → PNG·PDF·JSON 내보내기
 
 ## 개발 현황
 
 | 단계 | 내용 | 상태 |
 | --- | --- | --- |
 | 1 | 기반 세팅, 디자인 토큰, 저장소, 홈·공연·명단 화면 | ✅ 완료 |
-| 2 | 사진 입력 + 무대 영역(네 귀퉁이) 지정 | ⏳ 예정 |
+| 2 | 사진 입력 + 무대 영역(네 귀퉁이) 지정 | ✅ 완료 |
 | 3 | 사람 인식(MediaPipe) + 이름 붙이기 | ⏳ 예정 |
 | 4 | 컷 타임라인 + 동선 재생 | ⏳ 예정 |
 | 5 | 영상 입력 + 프레임 캡처 | ⏳ 예정 |
@@ -68,12 +73,19 @@ npm run lint    # 문법 검사
 | Zustand | 상태 관리 | MIT | https://zustand.docs.pmnd.rs |
 | sonner | 안내 토스트 | MIT | https://sonner.emilkowal.ski |
 | Lucide React | 아이콘 | ISC | https://lucide.dev |
+| Konva · react-konva | 캔버스·드래그(터치 지원) | MIT | https://konvajs.org |
 | oxlint | 문법 검사 | MIT | https://oxc.rs |
 | Jua · Gowun Dodum | 글꼴 | SIL Open Font License 1.1 | https://fonts.google.com |
 | Material Icons Outlined | 푸터 아이콘 | Apache-2.0 | https://fonts.google.com/icons |
 
 다음 단계에서 추가될 예정인 오픈소스: MediaPipe Tasks Vision(Apache-2.0),
-perspective-transform(MIT), Konva·react-konva(MIT), jsPDF(MIT), vite-plugin-pwa(MIT).
+jsPDF(MIT), vite-plugin-pwa(MIT).
+
+> **원근 → 평면 변환은 직접 구현했습니다.** 처음에는 `perspective-transform`(npm)을 쓰려고 했지만,
+> 이 패키지는 옛 UMD 방식이라 모듈 최상단에서 `this.numeric = …` 을 실행합니다.
+> 요즘 번들러(ESM)에서는 그 자리의 `this`가 `undefined`라서 화면이 통째로 깨집니다.
+> 그래서 네 점 호모그래피를 푸는 코드(`src/lib/homography.ts`, 약 50줄)를 직접 넣었습니다.
+> 의존성이 하나 줄고, 오프라인에서도 확실히 동작합니다.
 
 ---
 

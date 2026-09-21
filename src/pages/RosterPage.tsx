@@ -10,7 +10,7 @@ import StudentChip from '../components/StudentChip'
 import { db } from '../db/db'
 import { addStudents, deleteStudent, restoreStudent, updateStudent } from '../db/repo'
 import { PALETTE, textColorOn } from '../lib/colors'
-import { makeShortName, parseNameList } from '../lib/names'
+import { josa, makeShortName, parseNameList } from '../lib/names'
 import type { Student } from '../db/types'
 
 /** 되돌리기 한 칸 */
@@ -116,7 +116,7 @@ export default function RosterPage() {
     })
     setConfirmDelete(null)
     setEditing(null)
-    toast.success(`${gone.name}을(를) 지웠어요. 되돌리기로 되살릴 수 있어요.`)
+    toast.success(`${gone.name}${josa(gone.name, '을', '를')} 지웠어요. 되돌리기로 되살릴 수 있어요.`)
   }
 
   const pasteCount = parseNameList(pasteText).length
@@ -267,7 +267,11 @@ export default function RosterPage() {
       {confirmDelete && (
         <ConfirmDialog
           title="이 친구를 명단에서 뺄까요?"
-          message={`${confirmDelete.name}을(를) 명단에서 빼요. 되돌리기 버튼으로 되살릴 수 있어요.`}
+          message={`${confirmDelete.name}${josa(
+            confirmDelete.name,
+            '을',
+            '를',
+          )} 명단에서 빼요. 되돌리기 버튼으로 되살릴 수 있어요.`}
           confirmLabel="네, 뺄래요"
           onConfirm={handleDelete}
           onCancel={() => setConfirmDelete(null)}

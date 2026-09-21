@@ -1,6 +1,7 @@
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Camera, Pencil, PlayCircle, Users } from 'lucide-react'
+import CutStrip from '../components/CutStrip'
 import AppHeader from '../components/AppHeader'
 import StudentChip from '../components/StudentChip'
 import { db } from '../db/db'
@@ -9,12 +10,14 @@ export default function ProjectPage() {
   const { id = '' } = useParams()
   const navigate = useNavigate()
 
-  const project = useLiveQuery(() => db.projects.get(id), [id])
+  // 불러오는 중이면 undefined, 자료가 없으면 null로 구분한다.
+  const project = useLiveQuery(async () => (await db.projects.get(id)) ?? null, [id])
   const students = useLiveQuery(
     () => db.students.where('projectId').equals(id).sortBy('order'),
     [id],
     [],
   )
+  const cuts = useLiveQuery(() => db.cuts.where('projectId').equals(id).sortBy('order'), [id], [])
 
   if (project === undefined) return null
   if (project === null) {
@@ -69,12 +72,12 @@ export default function ProjectPage() {
             <span>{students.length > 0 ? `${students.length}명 등록됨` : '이름을 넣어요'}</span>
           </Link>
 
-          <button type="button" className="big-action" disabled>
+          <Link className="big-action" to={`/project/${id}/cut/new`}>
             <span className="big-action-no">2</span>
             <Camera size={40} aria-hidden="true" />
             <strong>컷 기록하기</strong>
-            <span className="soon">다음 단계에서 만들어요</span>
-          </button>
+            <span>{cuts.length > 0 ? `컷 ${cuts.length}개` : '사진을 가져와요'}</span>
+          </Link>
 
           <button type="button" className="big-action" disabled>
             <span className="big-action-no">3</span>
@@ -83,6 +86,8 @@ export default function ProjectPage() {
             <span className="soon">다음 단계에서 만들어요</span>
           </button>
         </div>
+
+        {cuts.length > 0 && <CutStrip projectId={id} cuts={cuts} />}
 
         {students.length > 0 && (
           <section className="roster-preview">

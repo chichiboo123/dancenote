@@ -35,3 +35,15 @@ export function parseNameList(text: string): string[] {
     .map((s) => s.replace(/^[\s.·•\-–—\d)]+/, '').trim())
     .filter((s) => s.length > 0)
 }
+
+/**
+ * 한국어 조사를 자연스럽게 붙인다. (받침이 있으면 앞말, 없으면 뒷말)
+ * 예) josa('김서준', '을', '를') → '을' / josa('이하윤', '이', '가') → '이'
+ */
+export function josa(word: string, withBatchim: string, withoutBatchim: string): string {
+  const last = word.trim().slice(-1)
+  const code = last.charCodeAt(0)
+  // 한글 음절이 아니면 (숫자·영어 등) 그냥 받침 없는 쪽을 쓴다.
+  if (Number.isNaN(code) || code < 0xac00 || code > 0xd7a3) return withoutBatchim
+  return (code - 0xac00) % 28 !== 0 ? withBatchim : withoutBatchim
+}

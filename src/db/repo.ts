@@ -1,5 +1,5 @@
 import { db } from './db'
-import type { Project, Student } from './types'
+import type { Cut, Project, Student } from './types'
 import { pickColor } from '../lib/colors'
 import { makeShortName } from '../lib/names'
 
@@ -101,4 +101,75 @@ export async function restoreStudent(student: Student): Promise<void> {
 
 export function countCuts(projectId: string) {
   return db.cuts.where('projectId').equals(projectId).count()
+}
+
+/* ---------------- 컷 ---------------- */
+
+export function listCuts(projectId: string) {
+  return db.cuts.where('projectId').equals(projectId).sortBy('order')
+}
+
+export function getCut(id: string) {
+  return db.cuts.get(id)
+}
+
+/** 가장 마지막 컷 (무대 영역을 물려받을 때 쓴다) */
+export async function lastCut(projectId: string): Promise<Cut | undefined> {
+  const cuts = await listCuts(projectId)
+  return cuts[cuts.length - 1]
+}
+
+/**
+ * 사진 파일들로 컷을 만든다. 고른 순서대로 컷이 생긴다.
+ * 직전 컷의 무대 영역이 있으면 그대로 물려받는다. (삼각대·영상 촬영 대응)
+ */
+export async function createCutsFromImages(
+  projectId: string,
+  images: { blob: Blob; width: number; height: number }[],
+  source: Cut['source'],
+): Promise<string[]> {
+  const existing = await listCuts(projectId)
+  const previous = existing[existing.length - 1]
+  let order = existing.length
+  const now = Date.now()
+
+  const cuts: Cut[] = images.map((img, i) => ({
+    id: newId(),
+    projectId,
+    order: order++,
+    title: `컷 ${order}`,
+    memo: '',
+    source,
+    imageBlob: img.blob,
+    imageSize: { width: img.width, height: img.height },
+    stageCorners: previous?.stageCorners,
+    placements: [],
+    unassigned: [],
+    createdAt: now + i,
+    updatedAt: now + i,
+  }))
+
+  await db.cuts.bulkAdd(cuts)
+  await updateProject(projectId, {})
+  return cuts.map((c) => c.id)
+}
+
+export async function updateCut(id: string, patch: Partial<Cut>): Promise<void> {
+  await db.cuts.update(id, { ...patch, updatedAt: Date.now() })
+  const cut = await db.cuts.get(id)
+  if (cut) await updateProject(cut.projectId, {})
+}
+
+export async function deleteCut(id: string): Promise<void> {
+  await db.cuts.delete(id)
+}
+
+/** 사진을 저장하지 않는 공연이면, 컷을 마무리할 때 원본 사진을 지운다. */
+export async function dropPhotoIfNeeded(cutId: string): Promise<void> {
+  const cut = await db.cuts.get(cutId)
+  if (!cut) return
+  const project = await db.projects.get(cut.projectId)
+  if (project && !project.keepPhotos && cut.imageBlob) {
+    await db.cuts.update(cutId, { imageBlob: undefined })
+  }
 }
