@@ -1,0 +1,36 @@
+/* 치수쌤 공통 푸터 (지정된 코드 그대로) */
+.chichiboo-footer {
+  width: 100%;
+  padding: 16px 24px;
+  background-color: #f5f5f5;
+  border-top: 1px solid #b2b2b2;
+  text-align: center;
+  margin-top: auto;
+}
+.chichiboo-footer a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: #767676;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.chichiboo-footer a:hover {
+  color: #006dd2;
+}
+.chichiboo-footer .material-icons-outlined {
+  font-size: 16px;
+}
+
+/* 어두운 무대(다크 모드)에서만 밝기를 낮춘다 */
+:root[data-theme='dark'] .chichiboo-footer {
+  background-color: var(--footer-bg);
+  border-top-color: var(--footer-border);
+}
+:root[data-theme='dark'] .chichiboo-footer a {
+  color: var(--footer-text);
+}
+:root[data-theme='dark'] .chichiboo-footer a:hover {
+  color: var(--c-mint);
+}

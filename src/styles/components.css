@@ -1,0 +1,252 @@
+/* ===== 공통 컴포넌트 ===== */
+
+/* --- 버튼 --- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: var(--tap-min);
+  padding: var(--sp-3) var(--sp-5);
+  border: 2px solid transparent;
+  border-radius: var(--r-md);
+  background: var(--c-surface);
+  color: var(--c-ink);
+  font-family: var(--font-title);
+  font-size: 18px;
+  cursor: pointer;
+  transition:
+    transform 0.12s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn:active {
+  transform: translateY(2px) scale(0.99);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--c-primary);
+  color: var(--c-on-primary);
+  box-shadow: var(--shadow-md);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--c-primary-dark);
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: var(--c-border-strong);
+  color: var(--c-ink);
+}
+.btn-ghost:hover:not(:disabled) {
+  background: var(--c-surface-2);
+}
+
+.btn-quiet {
+  background: var(--c-surface);
+  border-color: var(--c-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-danger {
+  background: transparent;
+  border-color: var(--c-danger);
+  color: var(--c-danger);
+}
+.btn-danger:hover:not(:disabled) {
+  background: var(--c-danger);
+  color: #fff;
+}
+
+.btn-big {
+  min-height: var(--tap-big);
+  font-size: 21px;
+  padding: var(--sp-4) var(--sp-6);
+  border-radius: var(--r-lg);
+}
+
+.btn-icon {
+  min-width: var(--tap-min);
+  padding: var(--sp-3);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+/* --- 카드 --- */
+.card {
+  background: var(--c-surface);
+  border: 2px solid var(--c-border);
+  border-radius: var(--r-lg);
+  padding: var(--sp-5);
+  box-shadow: var(--shadow-sm);
+}
+
+/* --- 입력 --- */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.field > label {
+  font-family: var(--font-title);
+  font-size: 18px;
+}
+
+.field .hint {
+  font-size: 15px;
+  color: var(--c-ink-soft);
+}
+
+.input,
+.textarea {
+  width: 100%;
+  min-height: var(--tap-min);
+  padding: var(--sp-3) var(--sp-4);
+  border: 2px solid var(--c-border-strong);
+  border-radius: var(--r-md);
+  background: var(--c-surface);
+  font-size: 18px;
+  transition: border-color 0.15s ease;
+}
+
+.textarea {
+  min-height: 160px;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.input:focus,
+.textarea:focus {
+  border-color: var(--c-primary);
+  outline: none;
+  box-shadow: 0 0 0 4px var(--c-primary-soft);
+}
+
+/* --- 안내 상자 --- */
+.notice {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: flex-start;
+  padding: var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--c-surface-2);
+  border: 2px dashed var(--c-border-strong);
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--c-ink-soft);
+}
+
+.notice svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+/* --- 빈 화면 안내 --- */
+.empty {
+  text-align: center;
+  padding: var(--sp-7) var(--sp-4);
+  color: var(--c-ink-soft);
+}
+
+/* --- 학생 칩 --- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: var(--tap-min);
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-pill);
+  border: 3px solid #fff;
+  box-shadow: var(--shadow-sm);
+  font-family: var(--font-title);
+  font-size: 18px;
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+
+.chip:active {
+  transform: scale(0.96);
+}
+
+.chip .chip-role {
+  font-family: var(--font-body);
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+/* --- 단계 표시 ①②③ --- */
+.steps {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.steps li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: 15px;
+  color: var(--c-ink-soft);
+}
+
+.steps .step-no {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-pill);
+  background: var(--c-surface-2);
+  border: 2px solid var(--c-border-strong);
+  font-family: var(--font-title);
+  font-size: 16px;
+}
+
+.steps li[aria-current='step'] {
+  color: var(--c-ink);
+}
+
+.steps li[aria-current='step'] .step-no {
+  background: var(--c-primary);
+  border-color: var(--c-primary);
+  color: var(--c-on-primary);
+}
+
+.steps li.done .step-no {
+  background: var(--c-mint);
+  border-color: var(--c-mint);
+  color: #06342a;
+}
+
+/* --- 작은 축하 애니메이션 --- */
+@keyframes pop-in {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.pop-in {
+  animation: pop-in 0.28s ease-out;
+}
