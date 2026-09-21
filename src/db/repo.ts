@@ -181,3 +181,38 @@ export async function reorderCuts(projectId: string, orderedIds: string[]): Prom
   })
   await updateProject(projectId, {})
 }
+
+/**
+ * 영상에서 딴 한 장면으로 컷을 만든다.
+ * 영상 파일 자체는 저장하지 않고, 파일 이름과 시각만 적어 둔다. (용량 때문)
+ */
+export async function createCutFromVideoFrame(
+  projectId: string,
+  image: { blob: Blob; width: number; height: number },
+  video: { fileName: string; timeSec: number },
+): Promise<string> {
+  const [cutId] = await createCutsFromImages(projectId, [image], 'video')
+  await db.cuts.update(cutId, {
+    video,
+    title: `${formatTime(video.timeSec)} 장면`,
+  })
+  return cutId
+}
+
+/** 초를 "1:23.4" 처럼 보여 준다. */
+export function formatTime(sec: number): string {
+  const safe = Math.max(0, sec)
+  const m = Math.floor(safe / 60)
+  const s = Math.floor(safe % 60)
+  const tenth = Math.floor((safe * 10) % 10)
+  return `${m}:${String(s).padStart(2, '0')}.${tenth}`
+}
+
+/** 이 공연에서 마지막으로 쓴 영상 파일 이름 */
+export async function lastVideoFileName(projectId: string): Promise<string | null> {
+  const cuts = await listCuts(projectId)
+  for (let i = cuts.length - 1; i >= 0; i--) {
+    if (cuts[i].video?.fileName) return cuts[i].video!.fileName
+  }
+  return null
+}

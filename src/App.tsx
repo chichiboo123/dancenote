@@ -12,6 +12,7 @@ import NewCutPage from './pages/NewCutPage'
 const CutStagePage = lazy(() => import('./pages/CutStagePage'))
 const CutPeoplePage = lazy(() => import('./pages/CutPeoplePage'))
 const PlayPage = lazy(() => import('./pages/PlayPage'))
+const VideoPage = lazy(() => import('./pages/VideoPage'))
 
 export default function App() {
   return (
@@ -30,6 +31,14 @@ export default function App() {
             element={
               <Suspense fallback={<p className="app-main">화면을 여는 중이에요…</p>}>
                 <CutStagePage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/project/:id/video"
+            element={
+              <Suspense fallback={<p className="app-main">화면을 여는 중이에요…</p>}>
+                <VideoPage />
               </Suspense>
             }
           />

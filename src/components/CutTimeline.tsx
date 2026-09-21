@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { GripHorizontal, ImageOff, MapPin, Pencil, Trash2, Users } from 'lucide-react'
+import { Clock, GripHorizontal, ImageOff, MapPin, Pencil, Trash2, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import Modal from './Modal'
 import ConfirmDialog from './ConfirmDialog'
-import { deleteCut, reorderCuts, updateCut } from '../db/repo'
+import { deleteCut, formatTime, reorderCuts, updateCut } from '../db/repo'
 import type { Cut } from '../db/types'
 
 const ITEM_WIDTH = 172
@@ -115,6 +115,11 @@ export default function CutTimeline({ projectId, cuts, activeId, onSelect, onOpe
                   '무대 영역을 정해요'
                 )}
               </span>
+              {cut.video && (
+                <span className="timeline-meta">
+                  <Clock size={14} aria-hidden="true" /> 영상 {formatTime(cut.video.timeSec)}
+                </span>
+              )}
               {cut.memo && <span className="timeline-memo">{cut.memo}</span>}
             </button>
 

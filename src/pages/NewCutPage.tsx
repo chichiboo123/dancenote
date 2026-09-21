@@ -101,10 +101,14 @@ export default function NewCutPage() {
               <span>여러 장 한꺼번에 가능</span>
             </button>
 
-            <button type="button" className="big-action" disabled>
+            <button
+              type="button"
+              className="big-action"
+              onClick={() => navigate(`/project/${id}/video`)}
+            >
               <Film size={40} aria-hidden="true" />
               <strong>영상 올리기</strong>
-              <span className="soon">다음 단계에서 만들어요</span>
+              <span>보다가 장면을 골라요</span>
             </button>
           </div>
         )}
