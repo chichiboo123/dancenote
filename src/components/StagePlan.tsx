@@ -30,6 +30,8 @@ interface Props {
   onLongPressEmpty?: (x: number, y: number) => void
   /** 아이콘을 눌렀을 때 */
   onSelectMark?: (id: string) => void
+  /** 그림 파일로 저장할 때 쓰려고 캔버스를 밖으로 넘겨 준다. */
+  stageRef?: React.RefObject<Konva.Stage | null>
 }
 
 const PAD = 34 // 라벨이 들어갈 바깥 여백
@@ -44,6 +46,7 @@ export default function StagePlan({
   onMoveMark,
   onLongPressEmpty,
   onSelectMark,
+  stageRef,
 }: Props) {
   const { ref, width } = useElementSize<HTMLDivElement>()
   const colors = usePlanColors()
@@ -100,6 +103,7 @@ export default function StagePlan({
     <div className="stage-plan" ref={ref}>
       {floorW > 0 && (
         <Stage
+          ref={stageRef}
           width={width}
           height={viewH}
           onPointerDown={(e) => {
@@ -110,6 +114,9 @@ export default function StagePlan({
           onPointerLeave={cancelLongPress}
         >
           <Layer listening={false}>
+            {/* 그림으로 저장할 때 바탕이 비지 않도록 */}
+            <Rect x={0} y={0} width={width} height={viewH} fill={colors.bg} />
+
             {/* 무대 마루 */}
             <Rect
               x={PAD}

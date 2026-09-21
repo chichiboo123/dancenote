@@ -221,3 +221,63 @@
   background: var(--c-primary-soft);
   border-color: var(--c-primary);
 }
+
+/* ===== 이름 붙이기 ===== */
+
+/* 명단 선택 창 */
+.picker-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  max-height: 46vh;
+  overflow-y: auto;
+  padding: 2px;
+}
+
+.picker-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: var(--tap-min);
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-pill);
+  border: 3px solid #fff;
+  box-shadow: var(--shadow-sm);
+  font-family: var(--font-title);
+  font-size: 18px;
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+
+.picker-chip:active {
+  transform: scale(0.96);
+}
+
+.picker-chip.is-current {
+  border-color: var(--c-ink);
+}
+
+.picker-tip {
+  font-family: var(--font-body);
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.75);
+  color: #1f2a44;
+}
+
+/* 인식 민감도 슬라이더 */
+.slider {
+  width: 100%;
+  height: 40px;
+  accent-color: var(--c-primary);
+  cursor: pointer;
+}
+
+.slider-ends {
+  display: flex;
+  justify-content: space-between;
+  font-size: 15px;
+  color: var(--c-ink-soft);
+}

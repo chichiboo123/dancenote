@@ -10,6 +10,7 @@ import NewCutPage from './pages/NewCutPage'
 
 // 캔버스(Konva)는 무거워서, 작업 화면에 들어갈 때만 불러온다.
 const CutStagePage = lazy(() => import('./pages/CutStagePage'))
+const CutPeoplePage = lazy(() => import('./pages/CutPeoplePage'))
 
 export default function App() {
   return (
@@ -28,6 +29,14 @@ export default function App() {
             element={
               <Suspense fallback={<p className="app-main">화면을 여는 중이에요…</p>}>
                 <CutStagePage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/project/:id/cut/:cutId/people"
+            element={
+              <Suspense fallback={<p className="app-main">화면을 여는 중이에요…</p>}>
+                <CutPeoplePage />
               </Suspense>
             }
           />

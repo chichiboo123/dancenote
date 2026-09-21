@@ -21,6 +21,7 @@ import { loadImage, releaseImage } from '../lib/image'
 import { CORNER_LABELS, createStageMapper, isValidQuad } from '../lib/homography'
 import type { Point } from '../db/types'
 import { josa } from '../lib/names'
+import { useAutoSave } from '../lib/useAutoSave'
 
 /** 확인용으로 찍어 보는 점 (저장되지 않는다) */
 interface TestMark extends Point {
@@ -123,11 +124,17 @@ export default function CutStagePage() {
     setPane('plan')
   }
 
+  // 네 점을 다 찍으면 바로 저장해 둔다. (화면을 떠나도 다시 찍지 않아도 되게)
+  useAutoSave(valid ? corners : null, async (saved) => {
+    if (!saved) return
+    await updateCut(cutId, { stageCorners: saved as [Point, Point, Point, Point] })
+  })
+
   async function handleSave() {
     if (!valid) return
     await updateCut(cutId, { stageCorners: corners as [Point, Point, Point, Point] })
-    toast.success('무대 영역을 저장했어요!')
-    navigate(`/project/${id}`)
+    toast.success('무대 영역을 정했어요! 이제 친구들 이름을 붙여 볼까요?')
+    navigate(`/project/${id}/cut/${cutId}/people`)
   }
 
   if (cut === undefined || project === undefined) return null
@@ -307,7 +314,7 @@ export default function CutStagePage() {
           onClick={handleSave}
           disabled={!valid}
         >
-          <Check size={26} aria-hidden="true" />이 무대 영역으로 저장하기
+          <Check size={26} aria-hidden="true" />이 무대 영역으로 하고 이름 붙이기
         </button>
       </main>
 

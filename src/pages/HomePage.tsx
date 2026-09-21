@@ -4,6 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { Plus, Trash2, Users, ShieldCheck, Clapperboard } from 'lucide-react'
 import { toast } from 'sonner'
 import AppHeader from '../components/AppHeader'
+import { ImportProjectButton } from '../components/BackupButtons'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { db } from '../db/db'
 import { deleteProject } from '../db/repo'
@@ -83,6 +84,10 @@ export default function HomePage() {
         >
           <Plus size={28} aria-hidden="true" />새 공연 만들기
         </button>
+
+        <div className="toolbar">
+          <ImportProjectButton onDone={(projectId) => navigate(`/project/${projectId}`)} />
+        </div>
 
         <h2 className="section-title">내 공연</h2>
 

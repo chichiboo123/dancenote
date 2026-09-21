@@ -5,6 +5,8 @@ import { useTheme } from '../store/theme'
  * 라이트: 따뜻한 나무 마루 / 다크: 검은 무대(블랙박스).
  */
 export interface PlanColors {
+  /** 그림으로 저장했을 때 바탕이 비지 않도록 쓰는 배경색 */
+  bg: string
   floor: string
   plank: string
   tape: string
@@ -13,6 +15,7 @@ export interface PlanColors {
 }
 
 const LIGHT: PlanColors = {
+  bg: '#FFFFFF',
   floor: '#F1D9B5',
   plank: '#D8BC90',
   tape: '#B5793F',
@@ -21,6 +24,7 @@ const LIGHT: PlanColors = {
 }
 
 const DARK: PlanColors = {
+  bg: '#1E2639',
   floor: '#0E1320',
   plank: '#222B41',
   tape: '#5C6A8C',

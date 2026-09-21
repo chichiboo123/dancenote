@@ -6,30 +6,38 @@ import { useElementSize } from '../lib/useElementSize'
 
 interface Props {
   image: HTMLImageElement
-  /** 지금까지 찍은 귀퉁이 (사진 좌표) */
+  /** 지금까지 찍은 무대 귀퉁이 (사진 좌표) */
   corners: Point[]
+  /** 귀퉁이 점과 테두리를 보여 줄지 */
+  showCorners?: boolean
   /** 사진의 빈 곳을 눌렀을 때 */
   onTapImage?: (p: Point) => void
+  /** 사진의 빈 곳을 길게 눌렀을 때 */
+  onLongPress?: (p: Point) => void
   /** 귀퉁이 점을 끌어 옮겼을 때 */
   onMoveCorner?: (index: number, p: Point) => void
-  /** 사진 위에 함께 그릴 것들 (다음 단계에서 인식 박스가 들어온다) */
-  children?: React.ReactNode
+  /** 사진 위에 함께 그릴 것들. 화면 배율(scale)을 받아 그린다. */
+  children?: (scale: number) => React.ReactNode
   /** 돋보기 사용 여부 */
   magnify?: boolean
 }
 
-/** 사진 위에서 무대 귀퉁이를 찍고 옮기는 캔버스 */
+/** 사진 위에서 무대 귀퉁이를 찍고, 인식 결과를 함께 보여 주는 캔버스 */
 export default function PhotoCanvas({
   image,
   corners,
+  showCorners = true,
   onTapImage,
+  onLongPress,
   onMoveCorner,
   children,
   magnify = true,
 }: Props) {
   const { ref, width } = useElementSize<HTMLDivElement>()
-  const stageRef = useRef<Konva.Stage>(null)
   const [lens, setLens] = useState<Point | null>(null)
+  const longPress = useRef<{ timer: number; point: Point } | null>(null)
+  // 길게 누르기가 이미 처리됐으면, 손을 뗄 때 '누르기'로 또 처리하지 않는다.
+  const longPressFired = useRef(false)
 
   // 사진을 칸 너비에 맞춰 줄인다.
   const scale = width > 0 ? width / image.width : 0
@@ -51,18 +59,48 @@ export default function PhotoCanvas({
     }
   }
 
+  function cancelLongPress() {
+    if (longPress.current) {
+      clearTimeout(longPress.current.timer)
+      longPress.current = null
+    }
+  }
+
   return (
     <div className="photo-canvas" ref={ref}>
       {scale > 0 && (
         <Stage
-          ref={stageRef}
           width={viewW}
           height={viewH}
           onPointerDown={(e) => {
-            const p = toImagePoint(e.target.getStage()!)
-            if (p && magnify) setLens(p)
+            const stage = e.target.getStage()
+            if (!stage) return
+            const p = toImagePoint(stage)
+            if (!p) return
+            if (magnify) setLens(p)
+            longPressFired.current = false
+            if (onLongPress) {
+              const timer = window.setTimeout(() => {
+                longPress.current = null
+                longPressFired.current = true
+                setLens(null)
+                onLongPress(p)
+              }, 600)
+              longPress.current = { timer, point: p }
+            }
           }}
           onPointerMove={(e) => {
+            if (longPress.current) {
+              // 손가락이 많이 움직이면 "길게 누르기"가 아니다.
+              const p = toImagePoint(e.target.getStage()!)
+              if (p) {
+                const moved = Math.hypot(
+                  p.x - longPress.current.point.x,
+                  p.y - longPress.current.point.y,
+                )
+                if (moved > 12) cancelLongPress()
+              }
+            }
             if (!lens) return
             const p = toImagePoint(e.target.getStage()!)
             if (p) setLens(p)
@@ -70,19 +108,24 @@ export default function PhotoCanvas({
           onPointerUp={(e) => {
             const stage = e.target.getStage()!
             const p = toImagePoint(stage)
+            const handled = longPressFired.current
+            cancelLongPress()
             setLens(null)
-            // 점 위를 눌렀다 뗀 것이면 새 점을 찍지 않는다.
-            const onMarker = e.target.name() === 'corner-marker'
-            if (p && !onMarker) onTapImage?.(p)
+            // 표시된 것 위를 눌렀다 뗀 것이면 새 점을 찍지 않는다.
+            const onMarker = e.target.name() === 'corner-marker' || e.target.name() === 'overlay'
+            if (p && !onMarker && !handled) onTapImage?.(p)
           }}
-          onPointerLeave={() => setLens(null)}
+          onPointerLeave={() => {
+            cancelLongPress()
+            setLens(null)
+          }}
         >
           <Layer listening={false}>
             <KImage image={image} width={viewW} height={viewH} />
           </Layer>
 
           <Layer>
-            {corners.length >= 2 && (
+            {showCorners && corners.length >= 2 && (
               <Line
                 points={flatPoints}
                 closed={corners.length === 4}
@@ -94,52 +137,52 @@ export default function PhotoCanvas({
                 listening={false}
               />
             )}
-            {corners.length === 4 && (
+            {showCorners && corners.length === 4 && (
               <Line points={flatPoints} closed fill="rgba(255, 210, 63, 0.16)" listening={false} />
             )}
 
-            {corners.map((c, i) => (
-              <Group
-                key={i}
-                x={c.x * scale}
-                y={c.y * scale}
-                draggable
-                onDragMove={(e) => {
-                  const p = {
-                    x: Math.min(image.width, Math.max(0, e.target.x() / scale)),
-                    y: Math.min(image.height, Math.max(0, e.target.y() / scale)),
-                  }
-                  if (magnify) setLens(p)
-                  onMoveCorner?.(i, p)
-                }}
-                onDragEnd={() => setLens(null)}
-              >
-                <Circle name="corner-marker" radius={22} fill="rgba(31,42,68,0.25)" />
-                <Circle
-                  name="corner-marker"
-                  radius={16}
-                  fill="#FF6B4A"
-                  stroke="#ffffff"
-                  strokeWidth={4}
-                />
-                <Text
-                  name="corner-marker"
-                  text={String(i + 1)}
-                  fontSize={18}
-                  fontStyle="bold"
-                  fill="#ffffff"
-                  width={40}
-                  height={40}
-                  offsetX={20}
-                  offsetY={20}
-                  align="center"
-                  verticalAlign="middle"
-                  listening={false}
-                />
-              </Group>
-            ))}
+            {showCorners &&
+              corners.map((c, i) => (
+                <Group
+                  key={i}
+                  x={c.x * scale}
+                  y={c.y * scale}
+                  draggable={Boolean(onMoveCorner)}
+                  onDragMove={(e) => {
+                    const p = {
+                      x: Math.min(image.width, Math.max(0, e.target.x() / scale)),
+                      y: Math.min(image.height, Math.max(0, e.target.y() / scale)),
+                    }
+                    if (magnify) setLens(p)
+                    onMoveCorner?.(i, p)
+                  }}
+                  onDragEnd={() => setLens(null)}
+                >
+                  <Circle name="corner-marker" radius={22} fill="rgba(31,42,68,0.25)" />
+                  <Circle
+                    name="corner-marker"
+                    radius={16}
+                    fill="#FF6B4A"
+                    stroke="#ffffff"
+                    strokeWidth={4}
+                  />
+                  <Text
+                    text={String(i + 1)}
+                    fontSize={18}
+                    fontFamily="Jua, sans-serif"
+                    fill="#ffffff"
+                    width={40}
+                    height={40}
+                    offsetX={20}
+                    offsetY={20}
+                    align="center"
+                    verticalAlign="middle"
+                    listening={false}
+                  />
+                </Group>
+              ))}
 
-            {children}
+            {children?.(scale)}
           </Layer>
         </Stage>
       )}

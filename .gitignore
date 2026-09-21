@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# MediaPipe wasm은 npm install 때 node_modules에서 복사해 온다 (scripts/copy-mediapipe.mjs)
+public/models/wasm/

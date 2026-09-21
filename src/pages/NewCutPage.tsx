@@ -1,10 +1,11 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Camera, Film, Images, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import AppHeader from '../components/AppHeader'
 import { createCutsFromImages } from '../db/repo'
 import { prepareImage } from '../lib/image'
+import { warmUpDetector } from '../lib/detector'
 
 export default function NewCutPage() {
   const { id = '' } = useParams()
@@ -12,6 +13,11 @@ export default function NewCutPage() {
   const cameraRef = useRef<HTMLInputElement>(null)
   const pickRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
+
+  // 사진을 고르는 동안 사람 찾기 도구를 미리 준비해 둔다. (처음 한 번이 오래 걸린다)
+  useEffect(() => {
+    warmUpDetector()
+  }, [])
 
   async function handleFiles(files: FileList | null, source: 'camera' | 'photo') {
     if (!files || files.length === 0) return

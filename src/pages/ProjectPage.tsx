@@ -2,6 +2,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Camera, Pencil, PlayCircle, Users } from 'lucide-react'
 import CutStrip from '../components/CutStrip'
+import { ExportProjectButton } from '../components/BackupButtons'
 import AppHeader from '../components/AppHeader'
 import StudentChip from '../components/StudentChip'
 import { db } from '../db/db'
@@ -58,10 +59,13 @@ export default function ProjectPage() {
             무대 {project.stageWidthM}m × {project.stageDepthM}m
             {!project.keepPhotos && ' · 사진을 저장하지 않는 공연'}
           </p>
-          <Link className="btn btn-ghost" to={`/project/${id}/edit`}>
-            <Pencil size={22} aria-hidden="true" />
-            공연 정보 고치기
-          </Link>
+          <div className="toolbar">
+            <Link className="btn btn-ghost" to={`/project/${id}/edit`}>
+              <Pencil size={22} aria-hidden="true" />
+              공연 정보 고치기
+            </Link>
+            <ExportProjectButton projectId={id} />
+          </div>
         </section>
 
         <div className="big-actions">

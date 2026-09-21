@@ -34,6 +34,8 @@ export interface Student {
 /** 평면도 위 한 사람의 자리 */
 export interface Placement {
   studentId: string
+  /** 사진 위 사각형 (인식으로 만든 자리면 들어 있다) */
+  bbox?: [number, number, number, number]
   /** 무대 좌표 0~1 (왼쪽 → 오른쪽) */
   x: number
   /** 무대 좌표 0~1 (무대 뒤 → 무대 앞) */
@@ -45,8 +47,8 @@ export interface UnassignedSpot {
   /** 무대 좌표 0~1 */
   x: number
   y: number
-  /** 사진 위 사각형 [x, y, 너비, 높이] (이미지 좌표) */
-  bbox: [number, number, number, number]
+  /** 사진 위 사각형 [x, y, 너비, 높이] (이미지 좌표). 직접 넣은 자리는 없을 수 있다. */
+  bbox?: [number, number, number, number]
 }
 
 /** 사진 위의 한 점 (이미지 좌표) */
