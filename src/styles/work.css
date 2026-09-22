@@ -73,8 +73,8 @@
   width: 100%;
   border-radius: var(--r-md);
   overflow: hidden;
-  background: var(--c-surface-2);
-  border: 2px solid var(--c-border);
+  background: var(--c-photo-bg);
+  border: var(--border-w) solid var(--c-border);
   touch-action: none; /* 점을 끌 때 화면이 같이 움직이지 않게 */
   user-select: none;
 }
@@ -131,7 +131,7 @@
   width: 100%;
   border-radius: var(--r-md);
   background: var(--c-surface);
-  border: 2px solid var(--c-border);
+  border: var(--border-w) solid var(--c-border);
   padding: var(--sp-2);
   touch-action: none;
   user-select: none;
@@ -191,7 +191,7 @@
   gap: 2px;
   width: 100%;
   padding: var(--sp-2);
-  border: 3px solid var(--c-border);
+  border: var(--border-w-strong) solid var(--c-border);
   border-radius: var(--r-md);
   background: var(--c-surface);
   color: inherit;
@@ -215,6 +215,7 @@
   top: 14px;
   left: 14px;
   z-index: 1;
+  pointer-events: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -268,19 +269,25 @@
   white-space: nowrap;
 }
 
+/* 조작 버튼은 카드 아래에 따로 둔다. (겹쳐 두면 좁은 화면에서 눌리지 않는다) */
 .timeline-actions {
-  position: absolute;
-  top: var(--sp-2);
-  right: var(--sp-2);
   display: flex;
-  gap: 4px;
+  justify-content: center;
+  gap: var(--sp-2);
+  margin-top: 6px;
 }
 
 .timeline-actions .btn {
-  min-height: 40px;
-  min-width: 40px;
+  flex: 1;
+  min-height: 44px;
+  min-width: 44px;
   padding: 6px;
   color: var(--c-ink-soft);
+}
+
+.timeline-actions .btn:hover {
+  color: var(--c-primary);
+  border-color: var(--c-primary);
 }
 
 /* --- 재생 조작 --- */
@@ -292,7 +299,7 @@
   padding: var(--sp-3);
   border-radius: var(--r-lg);
   background: var(--c-surface);
-  border: 2px solid var(--c-border);
+  border: var(--border-w) solid var(--c-border);
 }
 
 .play-button {
@@ -387,7 +394,7 @@
   border-radius: var(--r-md);
   overflow: hidden;
   background: #0e1320;
-  border: 2px solid var(--c-border);
+  border: var(--border-w) solid var(--c-border);
 }
 
 .video-player {
@@ -423,7 +430,7 @@
   padding: var(--sp-4);
   border-radius: var(--r-lg);
   background: var(--c-surface-2);
-  border: 2px dashed var(--c-border-strong);
+  border: var(--border-w-strong) dashed var(--c-border-strong);
 }
 
 .missing-wrap .section-title {
@@ -489,4 +496,28 @@
   .back-label {
     display: none;
   }
+}
+
+/* 세로로 긴 사진도 가운데에 반듯하게 */
+.photo-canvas {
+  display: flex;
+  justify-content: center;
+  -webkit-touch-callout: none; /* 길게 눌러도 iOS 메뉴가 뜨지 않게 */
+}
+
+.photo-canvas-inner {
+  position: relative;
+  line-height: 0;
+}
+
+/* 서로 붙어 있는 선택지(속도 등)는 한 줄에 고르게 */
+.toolbar.segmented {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-2);
+}
+
+.toolbar.segmented .btn {
+  flex: none;
+  justify-content: center;
 }

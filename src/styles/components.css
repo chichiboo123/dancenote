@@ -85,7 +85,7 @@
 /* --- 카드 --- */
 .card {
   background: var(--c-surface);
-  border: 2px solid var(--c-border);
+  border: var(--border-w) solid var(--c-border);
   border-radius: var(--r-lg);
   padding: var(--sp-5);
   box-shadow: var(--shadow-sm);
@@ -114,7 +114,7 @@
   width: 100%;
   min-height: var(--tap-min);
   padding: var(--sp-3) var(--sp-4);
-  border: 2px solid var(--c-border-strong);
+  border: var(--border-w-strong) solid var(--c-border-strong);
   border-radius: var(--r-md);
   background: var(--c-surface);
   font-size: 18px;
@@ -142,7 +142,7 @@
   padding: var(--sp-4);
   border-radius: var(--r-md);
   background: var(--c-surface-2);
-  border: 2px dashed var(--c-border-strong);
+  border: var(--border-w-strong) dashed var(--c-border-strong);
   font-size: 16px;
   line-height: 1.55;
   color: var(--c-ink-soft);
@@ -214,7 +214,7 @@
   height: 30px;
   border-radius: var(--r-pill);
   background: var(--c-surface-2);
-  border: 2px solid var(--c-border-strong);
+  border: var(--border-w-strong) solid var(--c-border-strong);
   font-family: var(--font-title);
   font-weight: 700;
   font-size: 16px;
@@ -253,4 +253,129 @@
 
 .pop-in {
   animation: pop-in 0.28s ease-out;
+}
+
+/* ===== 다듬기 (완성도 올리기) ===== */
+
+/* 본문으로 바로 가기 (키보드 사용자용) */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--c-primary);
+  color: var(--c-on-primary);
+  border-radius: 0 0 var(--r-md) 0;
+  font-weight: 700;
+}
+
+.skip-link:focus {
+  left: 0;
+}
+
+/* 불러오는 중 표시 */
+.spinner {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-pill);
+  border: 4px solid var(--c-border);
+  border-top-color: var(--c-primary);
+  animation: spin 0.9s linear infinite;
+}
+
+/* 화면 오류 안내 */
+.error-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-4);
+  text-align: center;
+  margin-top: var(--sp-6);
+  color: var(--c-ink);
+}
+
+.error-card > svg {
+  color: var(--c-primary);
+}
+
+.error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  justify-content: center;
+}
+
+.error-detail {
+  width: 100%;
+  margin-top: var(--sp-2);
+  font-size: 15px;
+  color: var(--c-ink-soft);
+}
+
+.error-detail summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.error-detail pre {
+  white-space: pre-wrap;
+  word-break: break-all;
+  text-align: left;
+  background: var(--c-surface-2);
+  padding: var(--sp-3);
+  border-radius: var(--r-sm);
+  font-size: 13px;
+}
+
+/* 새 버전 알림 */
+.update-notice {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--sp-4));
+  transform: translateX(-50%);
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4);
+  border-radius: var(--r-pill);
+  background: var(--c-ink);
+  color: #fff;
+  box-shadow: var(--shadow-lg);
+  font-size: 16px;
+  animation: pop-in 0.3s ease-out;
+  max-width: calc(100vw - var(--sp-5) * 2);
+}
+
+.update-notice .btn {
+  min-height: 44px;
+  padding: var(--sp-2) var(--sp-4);
+  font-size: 16px;
+  white-space: nowrap;
+}
+
+/* 버튼을 누르는 느낌을 조금 더 또렷하게 */
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px) scale(0.99);
+}
+
+/* 카드가 살짝 떠 보이게 */
+.card {
+  transition: box-shadow 0.18s ease;
+}
+
+/* 아이콘과 글자 사이 정렬 */
+.btn svg,
+.chip svg,
+.picker-chip svg {
+  flex: none;
 }

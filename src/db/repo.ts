@@ -256,3 +256,44 @@ export async function applyStageCornersToAllCuts(
   if (changed > 0) await updateProject(projectId, {})
   return changed
 }
+
+/**
+ * 사진 없이 컷을 하나 만든다.
+ *
+ * - 직전 컷이 있으면 그 자리를 그대로 가져와서, 바뀐 친구만 옮기면 되도록 한다.
+ *   (연습 전에 동선을 미리 짜거나, 사진 없이 다음 장면을 만들 때 쓴다)
+ * - 무대 영역은 공연 기본값을 쓴다.
+ */
+export async function createBlankCut(
+  projectId: string,
+  options: { copyFrom?: Cut } = {},
+): Promise<string> {
+  const existing = await listCuts(projectId)
+  const project = await db.projects.get(projectId)
+  const source = options.copyFrom
+  const now = Date.now()
+
+  const cut: Cut = {
+    id: newId(),
+    projectId,
+    order: existing.length,
+    title: source ? `${source.title} 다음` : `컷 ${existing.length + 1}`,
+    memo: '',
+    source: 'photo',
+    imageSize: source?.imageSize,
+    stageCorners: source?.stageCorners ?? project?.defaultStageCorners,
+    // 자리는 그대로 가져오되, 사진 위 네모는 새 컷과 맞지 않으니 뺀다.
+    placements: (source?.placements ?? []).map((p) => ({
+      studentId: p.studentId,
+      x: p.x,
+      y: p.y,
+    })),
+    unassigned: [],
+    createdAt: now,
+    updatedAt: now,
+  }
+
+  await db.cuts.add(cut)
+  await updateProject(projectId, {})
+  return cut.id
+}

@@ -155,7 +155,7 @@ export default function VideoPage() {
         }}
       />
 
-      <main className="app-main work-main">
+      <main className="app-main work-main" id="main-content">
         {!objectUrl ? (
           <>
             <div className="guide-bar" role="status">

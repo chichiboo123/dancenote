@@ -210,7 +210,7 @@ export default function PlayPage() {
     return (
       <>
         <AppHeader backTo="/" title="공연을 찾을 수 없어요" />
-        <main className="app-main">
+        <main className="app-main" id="main-content">
           <div className="empty">
             <p>이 공연은 지워졌어요.</p>
           </div>
@@ -247,7 +247,7 @@ export default function PlayPage() {
         }}
       />
 
-      <main className="app-main work-main">
+      <main className="app-main work-main" id="main-content">
         {cuts.length === 0 ? (
           <div className="empty">
             <Route size={48} aria-hidden="true" />
@@ -328,7 +328,7 @@ export default function PlayPage() {
               />
             </div>
 
-            <div className="toolbar">
+            <div className="toolbar segmented" role="group" aria-label="재생 속도">
               {(Object.keys(SPEED_LABELS) as PlaySpeed[]).map((s) => (
                 <button
                   key={s}
@@ -417,6 +417,7 @@ export default function PlayPage() {
               projectId={id}
               cuts={cuts}
               activeId={currentCut?.id}
+              onCreated={(cutId) => navigate(`/project/${id}/cut/${cutId}/people`)}
               onOpen={(cut) => {
                 setPlaying(false)
                 const index = cuts.findIndex((c) => c.id === cut.id)

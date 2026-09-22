@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Camera, Film, Images, Loader2 } from 'lucide-react'
+import { Camera, Film, Images, Loader2, PencilRuler } from 'lucide-react'
 import { toast } from 'sonner'
 import AppHeader from '../components/AppHeader'
-import { createCutsFromImages } from '../db/repo'
+import { createBlankCut, createCutsFromImages } from '../db/repo'
 import { prepareImage } from '../lib/image'
 import { warmUpDetector } from '../lib/detector'
 
@@ -67,7 +67,7 @@ export default function NewCutPage() {
         }}
       />
 
-      <main className="app-main">
+      <main className="app-main" id="main-content">
         <ol className="steps">
           <li className="done">
             <span className="step-no">1</span> 공연 만들기
@@ -110,6 +110,20 @@ export default function NewCutPage() {
               <strong>영상 올리기</strong>
               <span>보다가 장면을 골라요</span>
             </button>
+
+            <button
+              type="button"
+              className="big-action"
+              onClick={async () => {
+                const cutId = await createBlankCut(id)
+                toast.success('빈 컷을 만들었어요. 평면도에서 친구를 놓아 보세요!')
+                navigate(`/project/${id}/cut/${cutId}/people`)
+              }}
+            >
+              <PencilRuler size={40} aria-hidden="true" />
+              <strong>사진 없이 짜기</strong>
+              <span>평면도에 직접 놓아요</span>
+            </button>
           </div>
         )}
 
@@ -117,7 +131,8 @@ export default function NewCutPage() {
           <Camera size={22} aria-hidden="true" />
           <span>
             무대 <strong>네 귀퉁이가 모두 보이게</strong> 찍으면 평면도가 훨씬 정확해져요. 삼각대에
-            올려 두고 찍으면 무대 영역을 한 번만 정하면 돼요.
+            올려 두고 찍으면 무대 영역을 한 번만 정하면 돼요. 연습 전에 동선을 미리 짜려면
+            <strong> 사진 없이 짜기</strong>를 쓰세요.
           </span>
         </div>
 

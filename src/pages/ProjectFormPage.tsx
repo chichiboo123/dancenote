@@ -85,7 +85,7 @@ export default function ProjectFormPage() {
         }}
       />
 
-      <main className="app-main">
+      <main className="app-main" id="main-content">
         <ol className="steps">
           <li aria-current="step">
             <span className="step-no">1</span> 공연 만들기

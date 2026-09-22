@@ -1,5 +1,5 @@
 import { CANVAS_FONT } from '../lib/canvasFont'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Circle, Group, Image as KImage, Layer, Line, Stage, Text } from 'react-konva'
 import type Konva from 'konva'
 import type { Point } from '../db/types'
@@ -23,6 +23,28 @@ interface Props {
   magnify?: boolean
 }
 
+/**
+ * 사진을 보여 줄 수 있는 최대 높이.
+ * 세로로 긴 사진도 한눈에 들어오고, 아래의 버튼들이 화면 밖으로 밀리지 않게 한다.
+ */
+function useMaxPhotoHeight() {
+  const [maxHeight, setMaxHeight] = useState(() =>
+    typeof window === 'undefined' ? 600 : Math.max(280, window.innerHeight * 0.62),
+  )
+
+  useEffect(() => {
+    const update = () => setMaxHeight(Math.max(280, window.innerHeight * 0.62))
+    window.addEventListener('resize', update)
+    window.addEventListener('orientationchange', update)
+    return () => {
+      window.removeEventListener('resize', update)
+      window.removeEventListener('orientationchange', update)
+    }
+  }, [])
+
+  return maxHeight
+}
+
 /** 사진 위에서 무대 귀퉁이를 찍고, 인식 결과를 함께 보여 주는 캔버스 */
 export default function PhotoCanvas({
   image,
@@ -40,9 +62,11 @@ export default function PhotoCanvas({
   // 길게 누르기가 이미 처리됐으면, 손을 뗄 때 '누르기'로 또 처리하지 않는다.
   const longPressFired = useRef(false)
 
-  // 사진을 칸 너비에 맞춰 줄인다.
-  const scale = width > 0 ? width / image.width : 0
-  const viewW = width
+  // 사진을 칸 너비에 맞추되, 세로로 긴 사진이 화면을 다 차지하지 않도록 높이도 제한한다.
+  const maxHeight = useMaxPhotoHeight()
+  const scale =
+    width > 0 ? Math.min(width / image.width, maxHeight / image.height) : 0
+  const viewW = Math.round(image.width * scale)
   const viewH = Math.round(image.height * scale)
 
   const flatPoints = useMemo(
@@ -69,6 +93,16 @@ export default function PhotoCanvas({
 
   return (
     <div className="photo-canvas" ref={ref}>
+      <p
+        className="sr-only"
+        role="img"
+        aria-label={
+          corners.length === 4
+            ? '연습 사진이에요. 무대 네 귀퉁이를 모두 정했어요.'
+            : `연습 사진이에요. 무대 귀퉁이를 ${corners.length}개 정했어요.`
+        }
+      />
+      <div className="photo-canvas-inner" style={{ width: viewW || '100%' }}>
       {scale > 0 && (
         <Stage
           width={viewW}
@@ -187,6 +221,8 @@ export default function PhotoCanvas({
           </Layer>
         </Stage>
       )}
+
+      </div>
 
       {lens && scale > 0 && (
         <Magnifier

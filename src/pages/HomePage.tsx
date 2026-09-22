@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { BookOpen, Clapperboard, Plus, ShieldCheck, Trash2, Users } from 'lucide-react'
+import { BookOpen, Camera, Clapperboard, Plus, ShieldCheck, Trash2, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import AppHeader from '../components/AppHeader'
 import { ImportProjectButton } from '../components/BackupButtons'
@@ -28,15 +28,24 @@ export default function HomePage() {
   const [showOnboarding, setShowOnboarding] = useState(() => !hasSeenOnboarding())
 
   const projects = useLiveQuery(() => db.projects.orderBy('updatedAt').reverse().toArray(), [], [])
-  const studentCounts = useLiveQuery(
+  /** 공연마다 친구 수와 컷 수를 미리 세어 둔다. */
+  const counts = useLiveQuery(
     async () => {
-      const all = await db.students.toArray()
-      const map: Record<string, number> = {}
-      for (const s of all) map[s.projectId] = (map[s.projectId] ?? 0) + 1
+      const [allStudents, allCuts] = await Promise.all([
+        db.students.toArray(),
+        db.cuts.toArray(),
+      ])
+      const map: Record<string, { students: number; cuts: number }> = {}
+      const bump = (projectId: string, key: 'students' | 'cuts') => {
+        map[projectId] ??= { students: 0, cuts: 0 }
+        map[projectId][key] += 1
+      }
+      for (const s of allStudents) bump(s.projectId, 'students')
+      for (const c of allCuts) bump(c.projectId, 'cuts')
       return map
     },
     [],
-    {} as Record<string, number>,
+    {} as Record<string, { students: number; cuts: number }>,
   )
 
   async function handleDelete() {
@@ -66,7 +75,7 @@ export default function HomePage() {
         }}
       />
 
-      <main className="app-main">
+      <main className="app-main" id="main-content">
         <section className="hero">
           <h2 className="hero-title">우리 공연 동선을 기록해요</h2>
           <p className="hero-sub">
@@ -117,7 +126,11 @@ export default function HomePage() {
                     무대 {p.stageWidthM}m × {p.stageDepthM}m
                   </p>
                   <p className="project-meta">
-                    <Users size={18} aria-hidden="true" /> 친구 {studentCounts[p.id] ?? 0}명
+                    <Users size={18} aria-hidden="true" /> 친구 {counts[p.id]?.students ?? 0}명
+                    <span className="project-meta-dot" aria-hidden="true">
+                      ·
+                    </span>
+                    <Camera size={18} aria-hidden="true" /> 컷 {counts[p.id]?.cuts ?? 0}개
                   </p>
                   <p className="project-date">{formatDate(p.updatedAt)}</p>
                 </Link>

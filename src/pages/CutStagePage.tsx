@@ -161,7 +161,7 @@ export default function CutStagePage() {
     return (
       <>
         <AppHeader backTo={`/project/${id}`} title="컷을 찾을 수 없어요" />
-        <main className="app-main">
+        <main className="app-main" id="main-content">
           <div className="empty">
             <p>이 컷은 지워졌어요.</p>
           </div>
@@ -203,7 +203,7 @@ export default function CutStagePage() {
         }}
       />
 
-      <main className="app-main work-main">
+      <main className="app-main work-main" id="main-content">
         <div className="guide-bar" role="status">
           <MapPin size={24} aria-hidden="true" />
           <span>{guide}</span>
@@ -338,26 +338,18 @@ export default function CutStagePage() {
           </div>
         )}
 
-        <div className="toolbar">
-          <button
-            type="button"
-            className="btn btn-ghost"
-            onClick={() => applyToAll(true)}
-            disabled={!valid}
-          >
-            <CopyCheck size={22} aria-hidden="true" />
-            빈 컷에 적용
-          </button>
-          <button
-            type="button"
-            className="btn btn-ghost"
-            onClick={() => applyToAll(false)}
-            disabled={!valid}
-          >
-            <CopyCheck size={22} aria-hidden="true" />
-            모든 컷에 적용
-          </button>
-        </div>
+        {valid && (
+          <div className="toolbar">
+            <button type="button" className="btn btn-ghost" onClick={() => applyToAll(true)}>
+              <CopyCheck size={22} aria-hidden="true" />
+              빈 컷에 적용
+            </button>
+            <button type="button" className="btn btn-ghost" onClick={() => applyToAll(false)}>
+              <CopyCheck size={22} aria-hidden="true" />
+              모든 컷에 적용
+            </button>
+          </div>
+        )}
 
         <button
           type="button"

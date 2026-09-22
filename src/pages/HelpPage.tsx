@@ -89,7 +89,7 @@ export default function HelpPage() {
     <>
       <AppHeader backTo="/" title="사용법" />
 
-      <main className="app-main">
+      <main className="app-main" id="main-content">
         <section className="hero">
           <h2 className="hero-title">동선노트, 이렇게 써요</h2>
           <p className="hero-sub">

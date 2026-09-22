@@ -1,9 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Clock, GripHorizontal, ImageOff, MapPin, Pencil, Trash2, Users } from 'lucide-react'
+import {
+  Clock,
+  CopyPlus,
+  GripHorizontal,
+  ImageOff,
+  MapPin,
+  Pencil,
+  Trash2,
+  Users,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import Modal from './Modal'
 import ConfirmDialog from './ConfirmDialog'
-import { deleteCut, formatTime, reorderCuts, updateCut } from '../db/repo'
+import { createBlankCut, deleteCut, formatTime, reorderCuts, updateCut } from '../db/repo'
 import type { Cut } from '../db/types'
 
 const ITEM_WIDTH = 172
@@ -17,10 +26,19 @@ interface Props {
   onSelect?: (cut: Cut) => void
   /** 컷을 누르면 갈 주소를 만드는 함수 (없으면 onSelect만 부른다) */
   onOpen?: (cut: Cut) => void
+  /** 새로 만든 컷으로 이동 (이어 만들기) */
+  onCreated?: (cutId: string) => void
 }
 
 /** 필름처럼 늘어놓은 컷 목록. 끌어서 순서를 바꿀 수 있다. */
-export default function CutTimeline({ projectId, cuts, activeId, onSelect, onOpen }: Props) {
+export default function CutTimeline({
+  projectId,
+  cuts,
+  activeId,
+  onSelect,
+  onOpen,
+  onCreated,
+}: Props) {
   const [dragging, setDragging] = useState<{ id: string; from: number; to: number; dx: number } | null>(
     null,
   )
@@ -124,6 +142,19 @@ export default function CutTimeline({ projectId, cuts, activeId, onSelect, onOpe
             </button>
 
             <div className="timeline-actions">
+              <button
+                type="button"
+                className="btn btn-quiet btn-icon"
+                onClick={async () => {
+                  const newId = await createBlankCut(projectId, { copyFrom: cut })
+                  toast.success('이 컷의 자리를 그대로 가져와 새 컷을 만들었어요!')
+                  onCreated?.(newId)
+                }}
+                aria-label={`${cut.title}에서 이어 새 컷 만들기`}
+                title="이 컷에서 이어 만들기"
+              >
+                <CopyPlus size={18} aria-hidden="true" />
+              </button>
               <button
                 type="button"
                 className="btn btn-quiet btn-icon"

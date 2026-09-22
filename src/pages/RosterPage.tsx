@@ -51,7 +51,31 @@ export default function RosterPage() {
   }
 
   async function addNames(names: string[], source: string) {
-    const created = await addStudents(id, names)
+    // 이미 명단에 있는 이름은 알려 주고 넣지 않는다. (실수로 두 번 넣는 일이 많다)
+    const existing = new Set(students.map((s) => s.name))
+    const fresh: string[] = []
+    const duplicated: string[] = []
+    for (const raw of names) {
+      const name = raw.trim()
+      if (!name) continue
+      if (existing.has(name) || fresh.includes(name)) duplicated.push(name)
+      else fresh.push(name)
+    }
+    if (duplicated.length > 0) {
+      toast(
+        duplicated.length === 1
+          ? `${duplicated[0]}${josa(duplicated[0], '은', '는')} 이미 명단에 있어요.`
+          : `이미 명단에 있는 ${duplicated.length}명은 넣지 않았어요. (${duplicated
+              .slice(0, 3)
+              .join(', ')}${duplicated.length > 3 ? ' 등' : ''})`,
+      )
+    }
+    if (fresh.length === 0) {
+      if (duplicated.length === 0) toast.error('넣을 이름이 없어요.')
+      return
+    }
+
+    const created = await addStudents(id, fresh)
     if (created.length === 0) {
       toast.error('넣을 이름이 없어요.')
       return
@@ -143,7 +167,7 @@ export default function RosterPage() {
         }}
       />
 
-      <main className="app-main">
+      <main className="app-main" id="main-content">
         <ol className="steps">
           <li className="done">
             <span className="step-no">1</span> 공연 만들기

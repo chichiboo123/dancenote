@@ -5,7 +5,7 @@ import type Konva from 'konva'
 import { useElementSize } from '../lib/useElementSize'
 import { textColorOn } from '../lib/colors'
 import { usePlanColors } from '../lib/planColors'
-import { frontStageMarks } from '../lib/stageMarks'
+import { describePosition, frontStageMarks } from '../lib/stageMarks'
 
 export interface Mark {
   id: string
@@ -137,8 +137,17 @@ export default function StagePlan({
     }
   }
 
+  /** 화면 낭독기가 읽을 수 있는 설명 (캔버스는 그림이라 읽지 못한다) */
+  const spokenSummary = useMemo(() => {
+    if (marks.length === 0) return '무대 평면도예요. 아직 놓인 친구가 없어요.'
+    const where = (m: Mark) =>
+      `${m.label} — ${describePosition(m.x)}, ${m.y < 0.34 ? '무대 뒤' : m.y > 0.66 ? '무대 앞' : '가운데'}`
+    return `무대 평면도예요. ${marks.length}명이 있어요. ${marks.map(where).join(', ')}.`
+  }, [marks])
+
   return (
     <div className="stage-plan" ref={ref}>
+      <p className="sr-only" role="img" aria-label={spokenSummary} />
       {floorW > 0 && (
         <Stage
           ref={stageRef}
