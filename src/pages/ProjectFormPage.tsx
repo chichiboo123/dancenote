@@ -9,7 +9,7 @@ import { createProject, updateProject } from '../db/repo'
 /** 무대 크기를 손으로 안 재도 되도록 미리 담아 둔 값 */
 const STAGE_PRESETS = [
   { label: '교실 앞', w: 6, d: 4 },
-  { label: '강당 (기본)', w: 10, d: 6 },
+  { label: '강당', w: 10, d: 6 },
   { label: '큰 무대', w: 14, d: 9 },
 ]
 
@@ -106,7 +106,7 @@ export default function ProjectFormPage() {
               className="input"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="예) 6학년 뮤지컬 '별을 삼킨 아이'"
+              placeholder="예) 감자마켓"
               autoComplete="off"
             />
           </div>

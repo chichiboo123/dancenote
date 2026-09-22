@@ -17,7 +17,13 @@ import PhotoCanvas from '../components/PhotoCanvas'
 import StagePlan, { type Mark } from '../components/StagePlan'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { db } from '../db/db'
-import { applyStageCornersToAllCuts, deleteCut, rememberStageCorners, updateCut } from '../db/repo'
+import {
+  applyStageCornersToAllCuts,
+  deleteCut,
+  inheritedCorners,
+  rememberStageCorners,
+  updateCut,
+} from '../db/repo'
 import { loadImage, releaseImage } from '../lib/image'
 import { CORNER_LABELS, createStageMapper, isValidQuad } from '../lib/homography'
 import type { Point } from '../db/types'
@@ -40,13 +46,6 @@ export default function CutStagePage() {
   // 불러오는 중이면 undefined, 자료가 없으면 null로 구분한다.
   const cut = useLiveQuery(async () => (await db.cuts.get(cutId)) ?? null, [cutId])
   const project = useLiveQuery(async () => (await db.projects.get(id)) ?? null, [id])
-  const prevCut = useLiveQuery(async () => {
-    const c = await db.cuts.get(cutId)
-    if (!c || c.order === 0) return null
-    const all = await db.cuts.where('projectId').equals(c.projectId).sortBy('order')
-    return all.find((x) => x.order === c.order - 1) ?? null
-  }, [cutId])
-
   const [image, setImage] = useState<HTMLImageElement | null>(null)
   const [corners, setCorners] = useState<Point[]>([])
   const [testMarks, setTestMarks] = useState<TestMark[]>([])
@@ -54,6 +53,8 @@ export default function CutStagePage() {
   const [pane, setPane] = useState<'photo' | 'plan'>('photo')
   const [confirmDelete, setConfirmDelete] = useState(false)
   const loadedCutRef = useRef<string | null>(null)
+  // 이 화면에서 점을 건드렸는지 (물려받은 그대로인지 구분용)
+  const [touched, setTouched] = useState(false)
 
   // 사진 읽기
   useEffect(() => {
@@ -82,17 +83,18 @@ export default function CutStagePage() {
     loadedCutRef.current = cut.id
     setCorners(cut.stageCorners ? [...cut.stageCorners] : [])
     setTestMarks([])
+    setTouched(false)
   }, [cut])
 
   const done = corners.length === 4
   const valid = done && isValidQuad(corners)
   const mapper = useMemo(() => (valid ? createStageMapper(corners) : null), [valid, corners])
 
-  /** 이전 컷에서 그대로 물려받은 무대 영역인지 */
-  const inherited = useMemo(() => {
-    if (!prevCut?.stageCorners || !cut?.stageCorners) return false
-    return JSON.stringify(prevCut.stageCorners) === JSON.stringify(cut.stageCorners)
-  }, [prevCut, cut])
+  /**
+   * 지난 컷(또는 공연 기본값)에서 그대로 물려받은 무대 바닥인지.
+   * 화면을 연 뒤 한 번도 점을 건드리지 않았다면 물려받은 그대로다.
+   */
+  const inherited = !touched && Boolean(cut?.stageCorners) && done
 
   const planMarks: Mark[] = useMemo(() => {
     if (!mapper) return []
@@ -112,6 +114,7 @@ export default function CutStagePage() {
     if (corners.length < 4) {
       const next = [...corners, p]
       setCorners(next)
+      setTouched(true)
       if (next.length === 4) {
         setPane('plan')
         toast.success('무대 영역을 다 정했어요! 평면도를 확인해 볼까요?')
@@ -134,6 +137,21 @@ export default function CutStagePage() {
     await updateCut(cutId, { stageCorners: quad })
     await rememberStageCorners(id, quad, cut?.imageSize)
   })
+
+  /** 이 공연에 저장해 둔 무대 바닥을 이 컷에 가져온다. */
+  const savedCorners = useMemo(
+    () => (project ? inheritedCorners(project, cut?.imageSize) : undefined),
+    [project, cut?.imageSize],
+  )
+
+  function useSavedCorners() {
+    if (!savedCorners) return
+    setCorners([...savedCorners])
+    setTestMarks([])
+    setTouched(false)
+    setPane('plan')
+    toast.success('지난번에 정한 무대 바닥을 가져왔어요!')
+  }
 
   /** 이 무대 영역을 이 공연의 다른 컷에도 적용한다. */
   async function applyToAll(onlyEmpty: boolean) {
@@ -209,12 +227,25 @@ export default function CutStagePage() {
           <span>{guide}</span>
         </div>
 
+        {!done && savedCorners && (
+          <div className="notice notice-action" role="note">
+            <CopyCheck size={22} aria-hidden="true" />
+            <span>
+              지난번에 정한 <strong>무대 바닥</strong>이 있어요. 같은 자리에서 찍었다면 그대로
+              가져다 쓰면 돼요.
+            </span>
+            <button type="button" className="btn btn-primary btn-small" onClick={useSavedCorners}>
+              무대 바닥 가져오기
+            </button>
+          </div>
+        )}
+
         {inherited && done && (
           <div className="notice" role="note">
             <Check size={22} aria-hidden="true" />
             <span>
-              <strong>이전 컷과 같은 무대 영역</strong>을 쓰고 있어요. 카메라를 움직이지 않았다면
-              이대로 저장하면 돼요.
+              지난 컷에서 정한 <strong>무대 바닥을 그대로 쓰고 있어요.</strong> 카메라를 움직이지
+              않았다면 이대로 두고 넘어가면 돼요. 다르면 <strong>처음부터 다시</strong>를 눌러요.
             </span>
           </div>
         )}
@@ -247,9 +278,10 @@ export default function CutStagePage() {
                 image={image}
                 corners={corners}
                 onTapImage={handleTapImage}
-                onMoveCorner={(i, p) =>
+                onMoveCorner={(i, p) => {
+                  setTouched(true)
                   setCorners((prev) => prev.map((c, idx) => (idx === i ? p : c)))
-                }
+                }}
               />
             ) : (
               <div className="empty">
@@ -263,7 +295,10 @@ export default function CutStagePage() {
               <button
                 type="button"
                 className="btn btn-ghost"
-                onClick={() => setCorners((prev) => prev.slice(0, -1))}
+                onClick={() => {
+                  setTouched(true)
+                  setCorners((prev) => prev.slice(0, -1))
+                }}
                 disabled={corners.length === 0}
               >
                 <Undo2 size={22} aria-hidden="true" />
@@ -273,6 +308,7 @@ export default function CutStagePage() {
                 type="button"
                 className="btn btn-ghost"
                 onClick={() => {
+                  setTouched(true)
                   setCorners([])
                   setTestMarks([])
                   setPane('photo')

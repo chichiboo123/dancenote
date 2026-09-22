@@ -466,13 +466,9 @@
     font-size: 15px;
   }
 
-  /* 도구 버튼은 꽉 차게 배치 */
-  .toolbar .btn {
+  /* 도구 버튼은 두 칸씩 (마지막 하나가 남으면 그 줄을 다 채운다) */
+  .toolbar > .btn {
     flex: 1 1 calc(50% - var(--sp-2));
-    justify-content: center;
-  }
-  .toolbar .btn.btn-block {
-    flex-basis: 100%;
   }
 
   /* 컷 카드가 화면을 넘지 않게 */
@@ -517,7 +513,7 @@
   gap: var(--sp-2);
 }
 
-.toolbar.segmented .btn {
+.toolbar.segmented > .btn {
   flex: none;
   justify-content: center;
 }

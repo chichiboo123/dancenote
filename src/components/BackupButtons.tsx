@@ -29,7 +29,7 @@ export function ExportProjectButton({ projectId }: { projectId: string }) {
     <>
       <button type="button" className="btn btn-ghost" onClick={() => setOpen(true)}>
         <Download size={22} aria-hidden="true" />
-        백업 파일로 저장
+        백업 저장
       </button>
 
       {open && (

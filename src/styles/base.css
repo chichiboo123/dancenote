@@ -62,7 +62,7 @@ select {
 
 /* 키보드 포커스는 항상 잘 보이게 */
 :focus-visible {
-  outline: 3px solid var(--c-mint);
+  outline: 3px solid var(--c-focus);
   outline-offset: 2px;
   border-radius: var(--r-sm);
 }

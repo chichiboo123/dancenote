@@ -189,7 +189,7 @@ export default function RosterPage() {
               className="input"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="예) 김서준"
+              placeholder="예) 이송내"
               autoComplete="off"
             />
           </div>
@@ -258,7 +258,7 @@ export default function RosterPage() {
             className="textarea"
             value={pasteText}
             onChange={(e) => setPasteText(e.target.value)}
-            placeholder={'김서준\n이하윤\n박지호'}
+            placeholder={'이송내\n장배영\n유의정'}
             aria-label="이름 목록"
           />
           <p className="paste-count">찾은 이름: {pasteCount}명</p>

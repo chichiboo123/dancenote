@@ -32,7 +32,7 @@ export interface Project {
 export interface Student {
   id: string
   projectId: string
-  /** 전체 이름 (예: 김서준) */
+  /** 전체 이름 (예: 이송내) */
   name: string
   /** 아이콘에 쓰는 짧은 이름 (예: 서준) */
   shortName: string

@@ -87,7 +87,7 @@ export default function NamePickerSheet({
               className="input"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              placeholder="예) 김서준"
+              placeholder="예) 이송내"
               autoFocus
               autoComplete="off"
             />

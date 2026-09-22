@@ -247,15 +247,16 @@
 }
 
 .preset-row {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: var(--sp-2);
 }
 
 .preset-row .btn {
   flex-direction: column;
   gap: 2px;
-  padding: var(--sp-2) var(--sp-4);
+  padding: var(--sp-3) var(--sp-2);
+  width: 100%;
 }
 
 .preset-row .btn.is-on {
@@ -313,14 +314,15 @@
 
 .add-field {
   flex: 1;
+  min-width: 0;
 }
 
-.toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-  margin-top: var(--sp-3);
+.add-row > .btn {
+  flex: 0 0 auto;
+  min-width: 132px;
 }
+
+
 
 .chip-grid {
   display: flex;
@@ -620,6 +622,10 @@
   .big-action strong {
     font-size: 19px;
   }
+  .big-action-text {
+    flex: 1;
+    align-items: flex-start;
+  }
   .big-action > svg {
     flex: none;
   }
@@ -634,12 +640,10 @@
     gap: var(--sp-2);
   }
 
-  /* 이름 넣기 줄: 입력과 버튼을 위아래로 */
-  .add-row {
-    flex-wrap: wrap;
-  }
-  .add-row .btn {
-    flex: 1;
+  /* 이름 넣기 줄: 입력을 넓게, 버튼은 딱 필요한 만큼 */
+  .add-row > .btn {
+    min-width: 104px;
+    padding-inline: var(--sp-3);
   }
 
   /* 대화상자는 아래에서 꽉 차게 */
@@ -703,4 +707,51 @@
 .project-meta-dot {
   color: var(--c-border-strong);
   margin: 0 2px;
+}
+
+/* --- 내보내기 묶음 (화면 아래쪽) --- */
+.outbox {
+  margin-top: var(--sp-6);
+  background: var(--c-surface-2);
+  border-style: dashed;
+}
+
+.outbox .section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: 0;
+  margin-bottom: var(--sp-2);
+  font-size: 20px;
+}
+
+/* --- 공연 설정 (맨 아래 조용한 줄) --- */
+.project-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-4);
+  border-top: var(--border-w) solid var(--c-border);
+}
+
+.project-footer .project-meta {
+  margin: 0;
+}
+
+/* 큰 버튼 안의 글 묶음 (좁은 화면에서 제목이 쪼개지지 않게) */
+.big-action-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* 내보내기 버튼은 보조 동작이라 조금 작게 (KRDS medium 규격) */
+.outbox .toolbar > .btn {
+  min-height: 48px;
+  padding-inline: var(--sp-3);
+  font-size: 16px;
 }

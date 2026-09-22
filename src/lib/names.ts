@@ -1,6 +1,6 @@
 /**
  * 아이콘에 쓸 짧은 이름 만들기.
- * 세 글자 이상인 한국 이름은 성을 빼고 뒤 두 글자를 쓴다. (김서준 → 서준)
+ * 세 글자 이상인 한국 이름은 성을 빼고 뒤 두 글자를 쓴다. (이송내 → 송내)
  * 이미 쓰고 있는 짧은 이름과 겹치면 글자를 늘려 구분한다.
  */
 export function makeShortName(fullName: string, taken: string[] = []): string {
@@ -38,7 +38,7 @@ export function parseNameList(text: string): string[] {
 
 /**
  * 한국어 조사를 자연스럽게 붙인다. (받침이 있으면 앞말, 없으면 뒷말)
- * 예) josa('김서준', '을', '를') → '을' / josa('이하윤', '이', '가') → '이'
+ * 예) josa('이송내', '을', '를') → '를' / josa('장배영', '이', '가') → '이'
  */
 export function josa(word: string, withBatchim: string, withoutBatchim: string): string {
   const last = word.trim().slice(-1)

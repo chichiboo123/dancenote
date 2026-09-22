@@ -1,6 +1,6 @@
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ArrowRight, Camera, Check, Pencil, PlayCircle, Users } from 'lucide-react'
+import { ArrowRight, Camera, Check, Download, Pencil, PlayCircle, Users } from 'lucide-react'
 import CutTimeline from '../components/CutTimeline'
 import { ExportProjectButton } from '../components/BackupButtons'
 import PdfExportButton from '../components/PdfExportButton'
@@ -90,6 +90,7 @@ export default function ProjectPage() {
       />
 
       <main className="app-main" id="main-content">
+        {/* 1. 지금 무엇을 하면 되는지 */}
         <section className="next-step" role="status">
           <span className="next-step-label">다음에 할 일</span>
           <Link className="next-step-action" to={nextStep.to}>
@@ -99,44 +100,37 @@ export default function ProjectPage() {
           </Link>
         </section>
 
-        <section className="card project-summary">
-          <p className="project-meta">
-            무대 {project.stageWidthM}m × {project.stageDepthM}m
-            {!project.keepPhotos && ' · 사진을 저장하지 않는 공연'}
-          </p>
-          <div className="toolbar">
-            <Link className="btn btn-ghost" to={`/project/${id}/edit`}>
-              <Pencil size={22} aria-hidden="true" />
-              공연 정보 고치기
-            </Link>
-            <PdfExportButton projectId={id} />
-            <ExportProjectButton projectId={id} />
-          </div>
-        </section>
-
+        {/* 2. 만들기 — 이 공연에서 할 수 있는 세 가지 */}
         <div className="big-actions">
           <Link className="big-action" to={`/project/${id}/roster`}>
             <span className="big-action-no">1</span>
             <Users size={40} aria-hidden="true" />
-            <strong>친구 명단</strong>
-            <span>{students.length > 0 ? `${students.length}명 등록됨` : '이름을 넣어요'}</span>
+            <span className="big-action-text">
+              <strong>친구 명단</strong>
+              <span>{students.length > 0 ? `${students.length}명 등록됨` : '이름을 넣어요'}</span>
+            </span>
           </Link>
 
           <Link className="big-action" to={`/project/${id}/cut/new`}>
             <span className="big-action-no">2</span>
             <Camera size={40} aria-hidden="true" />
-            <strong>컷 기록하기</strong>
-            <span>{cuts.length > 0 ? `컷 ${cuts.length}개` : '사진을 가져와요'}</span>
+            <span className="big-action-text">
+              <strong>컷 기록하기</strong>
+              <span>{cuts.length > 0 ? `컷 ${cuts.length}개` : '사진을 가져와요'}</span>
+            </span>
           </Link>
 
           <Link className="big-action" to={`/project/${id}/play`}>
             <span className="big-action-no">3</span>
             <PlayCircle size={40} aria-hidden="true" />
-            <strong>동선 재생</strong>
-            <span>{cuts.length >= 2 ? '컷을 이어서 봐요' : '컷이 2개 이상이면 볼 수 있어요'}</span>
+            <span className="big-action-text">
+              <strong>동선 재생</strong>
+              <span>{cuts.length >= 2 ? '컷을 이어서 봐요' : '컷이 2개 이상이면 볼 수 있어요'}</span>
+            </span>
           </Link>
         </div>
 
+        {/* 3. 지금까지 만든 것 */}
         {cuts.length > 0 && (
           <CutTimeline
             projectId={id}
@@ -158,11 +152,43 @@ export default function ProjectPage() {
             <h2 className="section-title">우리 반 친구들</h2>
             <div className="chip-grid">
               {students.map((s) => (
-                <StudentChip key={s.id} student={s} onClick={() => navigate(`/project/${id}/roster`)} />
+                <StudentChip
+                  key={s.id}
+                  student={s}
+                  onClick={() => navigate(`/project/${id}/roster`)}
+                />
               ))}
             </div>
           </section>
         )}
+
+        {/* 4. 다 만든 뒤에 하는 일 — 맨 아래에 모아 둔다 */}
+        <section className="card outbox">
+          <h2 className="section-title">
+            <Download size={20} aria-hidden="true" /> 내보내고 보관하기
+          </h2>
+          <p className="hint">
+            {cuts.length > 0
+              ? '만든 동선을 인쇄용 표로 뽑거나, 다른 기기로 옮길 수 있게 파일로 저장해요.'
+              : '컷을 만들면 동선표를 뽑을 수 있어요. 지금도 명단은 백업할 수 있어요.'}
+          </p>
+          <div className="toolbar">
+            <PdfExportButton projectId={id} />
+            <ExportProjectButton projectId={id} />
+          </div>
+        </section>
+
+        {/* 5. 공연 설정 — 자주 쓰지 않으니 맨 마지막에 */}
+        <section className="project-footer">
+          <p className="project-meta">
+            무대 {project.stageWidthM}m × {project.stageDepthM}m
+            {!project.keepPhotos && ' · 사진을 저장하지 않는 공연'}
+          </p>
+          <Link className="btn btn-ghost btn-small" to={`/project/${id}/edit`}>
+            <Pencil size={20} aria-hidden="true" />
+            공연 정보 고치기
+          </Link>
+        </section>
       </main>
     </>
   )

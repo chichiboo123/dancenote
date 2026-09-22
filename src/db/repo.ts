@@ -114,14 +114,34 @@ export function getCut(id: string) {
  * 새 컷이 물려받을 무대 영역을 고른다.
  * 공연에 저장해 둔 기본 무대 영역을 쓰되, 사진 크기가 다르면 좌표가 맞지 않으므로 쓰지 않는다.
  */
-function inheritedCorners(
+export function inheritedCorners(
   project: Project | undefined,
-  image: { width: number; height: number },
+  image?: { width: number; height: number },
 ): Cut['stageCorners'] {
-  if (!project?.defaultStageCorners) return undefined
-  const size = project.defaultStageImageSize
-  if (size && (size.width !== image.width || size.height !== image.height)) return undefined
-  return project.defaultStageCorners
+  const saved = project?.defaultStageCorners
+  if (!saved) return undefined
+
+  const from = project?.defaultStageImageSize
+  // 어느 쪽 크기를 모르면 그대로 쓴다.
+  if (!from || !image) return saved
+  if (from.width === image.width && from.height === image.height) return saved
+
+  // 사진 크기는 달라도 가로세로 비율이 같으면(같은 카메라로 찍은 다른 화질 등)
+  // 좌표를 비율만큼 늘려서 그대로 쓸 수 있다.
+  const sameShape = Math.abs(from.width / from.height - image.width / image.height) < 0.02
+  if (!sameShape) return undefined
+  return scaleCorners(saved, from, image)
+}
+
+/** 무대 귀퉁이 좌표를 다른 사진 크기에 맞춰 늘린다. */
+export function scaleCorners(
+  corners: [Point, Point, Point, Point],
+  from: { width: number; height: number },
+  to: { width: number; height: number },
+): [Point, Point, Point, Point] {
+  const sx = to.width / from.width
+  const sy = to.height / from.height
+  return corners.map((c) => ({ x: c.x * sx, y: c.y * sy })) as [Point, Point, Point, Point]
 }
 
 /**
