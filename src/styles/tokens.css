@@ -1,50 +1,82 @@
 /* ===========================================================
-   동선노트 디자인 토큰 — 컨셉: "무대 바닥의 스파이크 테이프"
-   따뜻한 나무 마루 무대 + 조명이 비치는 느낌
+   동선노트 디자인 토큰
+   컨셉: "조명이 켜진 깨끗한 무대" — KRDS 블루를 중심으로,
+   치수쌤 파스텔(블루·그린·옐로·핑크)을 포인트로 쓴다.
    =========================================================== */
 :root {
-  /* --- 색상: 밝은 무대(라이트 모드) --- */
-  --c-bg: #fff8ec; /* 배경 크림 */
-  --c-surface: #ffffff; /* 카드 바닥 */
-  --c-surface-2: #fdf1dd; /* 살짝 눌린 면 */
-  --c-stage: #f1d9b5; /* 무대 마루 */
-  --c-photo-bg: #efe4d2; /* 사진 칸 여백 */
-  --c-stage-line: #c8a878; /* 마루 위 테이프 선 */
-  --c-primary: #ff6b4a; /* 주요 버튼 코랄 */
-  --c-primary-dark: #e2512f; /* 눌렀을 때 */
-  --c-primary-soft: #ffe6df; /* 코랄 연한 배경 */
-  --c-ink: #1f2a44; /* 글자·선 잉크 네이비 */
-  --c-ink-soft: #55607a; /* 보조 글자 */
-  --c-accent: #ffd23f; /* 스포트라이트 옐로 */
-  --c-mint: #3cc7a8; /* 보조 민트 */
-  --c-danger: #d8362a; /* 삭제·경고 */
-  --c-border: #eadcc4; /* 테두리 */
-  --c-border-strong: #cdb794;
+  /* --- KRDS 기본 --- */
+  --color-primary: #006dd2;
+  --color-primary-light: #e8f3ff;
+  --color-secondary: #00a68a;
+  --color-error: #d32f2f;
+  --color-warning: #f57c00;
+  --color-success: #388e3c;
+
+  /* --- 치수쌤 파스텔 팔레트 --- */
+  --color-pastel-blue: #bfd9f2;
+  --color-pastel-green: #c8edd9;
+  --color-pastel-yellow: #fff3b0;
+  --color-pastel-pink: #ffd6e0;
+  --color-pastel-blue-dark: #1a5f8a;
+  --color-pastel-green-dark: #1a6b47;
+  --color-pastel-yellow-dark: #7a6000;
+  --color-pastel-pink-dark: #8a2840;
+
+  /* --- 앱에서 쓰는 이름 (라이트) --- */
+  --c-bg: #f5f7fb; /* 바탕 */
+  --c-surface: #ffffff; /* 카드 */
+  --c-surface-2: #f0f3f8; /* 살짝 눌린 면 */
+  --c-surface-3: #e7ebf2;
+  --c-photo-bg: #e9edf4; /* 사진 칸 여백 */
+  --c-primary: var(--color-primary);
+  --c-primary-dark: #0056a8;
+  --c-primary-soft: var(--color-primary-light);
+  --c-primary-ring: rgba(0, 109, 210, 0.18);
+  --c-ink: #1a1d24; /* 글자 */
+  --c-ink-soft: #5b6272; /* 보조 글자 */
+  --c-ink-faint: #8a91a0;
+  --c-accent: var(--color-pastel-yellow);
+  --c-accent-ink: var(--color-pastel-yellow-dark);
+  --c-mint: var(--color-secondary);
+  --c-danger: var(--color-error);
+  --c-danger-soft: #fdecec;
+  --c-border: #e3e7ee;
+  --c-border-strong: #cdd3dd;
   --c-on-primary: #ffffff;
-  --c-focus: #1f6feb; /* 초점 표시 (KRDS 기준의 또렷한 파랑) */
-  --c-disabled-bg: #ece4d6;
-  --c-disabled-text: #9b937f;
+  --c-focus: #006dd2;
+  --c-disabled-bg: #eef0f4;
+  --c-disabled-text: #a0a6b1;
 
-  /* --- 그림자: 조명 아래 살짝 뜬 느낌 --- */
-  --shadow-sm: 0 1px 2px rgba(31, 42, 68, 0.06), 0 2px 6px rgba(31, 42, 68, 0.06);
-  --shadow-md: 0 2px 6px rgba(31, 42, 68, 0.07), 0 8px 20px rgba(31, 42, 68, 0.1);
-  --shadow-lg: 0 6px 16px rgba(31, 42, 68, 0.1), 0 20px 48px rgba(31, 42, 68, 0.16);
-  /* 테두리 두께 (한곳에서 관리) */
-  --border-w: 1.5px;
-  --border-w-strong: 2px;
+  /* 파스텔 면 (카드·아이콘 타일) */
+  --tint-blue: #eaf3fd;
+  --tint-blue-ink: var(--color-pastel-blue-dark);
+  --tint-green: #e8f7ef;
+  --tint-green-ink: var(--color-pastel-green-dark);
+  --tint-yellow: #fff8d6;
+  --tint-yellow-ink: var(--color-pastel-yellow-dark);
+  --tint-pink: #ffedf2;
+  --tint-pink-ink: var(--color-pastel-pink-dark);
 
-  /* --- 글꼴: Pretendard GOV 기준 --- */
-  --font-stack: 'Pretendard GOV', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI',
-    system-ui, sans-serif;
+  --hero-grad: linear-gradient(135deg, #e3efff 0%, #eef0ff 45%, #ffeaf1 100%);
+
+  /* --- 그림자: 가볍고 부드럽게 --- */
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05), 0 1px 3px rgba(16, 24, 40, 0.04);
+  --shadow-md: 0 4px 12px rgba(16, 24, 40, 0.07), 0 1px 3px rgba(16, 24, 40, 0.05);
+  --shadow-lg: 0 16px 40px rgba(16, 24, 40, 0.14), 0 4px 12px rgba(16, 24, 40, 0.06);
+  --shadow-primary: 0 6px 16px rgba(0, 109, 210, 0.24);
+  --border-w: 1px;
+  --border-w-strong: 1px;
+
+  /* --- 글꼴: Pretendard GOV (앱 안에 담아 두어 오프라인에서도 같다) --- */
+  --font-stack: 'Pretendard GOV Variable', 'Pretendard GOV', 'Pretendard Variable', Pretendard,
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   --font-title: var(--font-stack);
   --font-body: var(--font-stack);
-  /* 캔버스(Konva·PDF)에서 쓰는 글꼴 이름 */
-  --font-canvas: 'Pretendard GOV', Pretendard, sans-serif;
 
-  /* --- 크기 (어린이 손가락 기준) --- */
-  --tap-min: 56px; /* 터치 영역 최소 */
-  --tap-big: 72px; /* 주요 버튼 */
-  --text-base: 18px; /* 본문 기본 18px 이상 */
+  /* --- 크기 (어린이 손가락 기준, KRDS 권장 이상) --- */
+  --tap-min: 52px;
+  --tap-big: 60px;
+  --text-base: 17px;
 
   /* --- 간격 --- */
   --sp-1: 4px;
@@ -57,44 +89,63 @@
 
   /* --- 모서리 --- */
   --r-sm: 8px;
-  --r-md: 14px;
-  --r-lg: 22px;
+  --r-md: 12px;
+  --r-lg: 20px;
   --r-pill: 999px;
 
   /* --- 푸터(치수쌤 공통 푸터는 고정 색상 사용) --- */
   --footer-bg: #f5f5f5;
   --footer-border: #b2b2b2;
   --footer-text: #767676;
+
+  color-scheme: light;
 }
 
 /* --- 어두운 무대(다크 모드): 블랙박스 극장 --- */
 :root[data-theme='dark'] {
-  --c-bg: #141a2b;
-  --c-surface: #1e2639;
-  --c-surface-2: #263048;
-  --c-stage: #0e1320; /* 검은 무대 바닥 */
-  --c-photo-bg: #10151f;
-  --c-stage-line: #4a5570;
-  --c-primary: #ff7d5e;
-  --c-primary-dark: #ff9a80;
-  --c-primary-soft: #3a2a2a;
-  --c-ink: #f2f5fb;
-  --c-ink-soft: #aeb8cf;
-  --c-accent: #ffd968;
-  --c-mint: #4fdcbb;
-  --c-danger: #ff7a6e;
-  --c-border: #39445e;
-  --c-border-strong: #566281;
-  --c-on-primary: #241008;
-  --c-focus: #7aa7ff;
-  --c-disabled-bg: #2a3348;
-  --c-disabled-text: #6e7893;
+  --c-bg: #0e131d;
+  --c-surface: #161c29;
+  --c-surface-2: #1d2433;
+  --c-surface-3: #262f41;
+  --c-photo-bg: #0b0f17;
+  --c-primary: #4d94ff;
+  --c-primary-dark: #7aafff;
+  --c-primary-soft: #16253d;
+  --c-primary-ring: rgba(77, 148, 255, 0.3);
+  --c-ink: #eef1f7;
+  --c-ink-soft: #a9b2c4;
+  --c-ink-faint: #7b8497;
+  --c-accent: #3a3314;
+  --c-accent-ink: #ffe27a;
+  --c-mint: #3fd1b0;
+  --c-danger: #ff7a70;
+  --c-danger-soft: #3a1e1e;
+  --c-border: #273043;
+  --c-border-strong: #3a4458;
+  --c-on-primary: #07142a;
+  --c-focus: #7aafff;
+  --c-disabled-bg: #222a3a;
+  --c-disabled-text: #626c80;
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.32), 0 2px 6px rgba(0, 0, 0, 0.28);
-  --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.35), 0 8px 20px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 6px 16px rgba(0, 0, 0, 0.4), 0 20px 48px rgba(0, 0, 0, 0.5);
+  --tint-blue: #16253d;
+  --tint-blue-ink: #9cc8ff;
+  --tint-green: #132d25;
+  --tint-green-ink: #8fe3c1;
+  --tint-yellow: #2e2a14;
+  --tint-yellow-ink: #ffe27a;
+  --tint-pink: #33192a;
+  --tint-pink-ink: #ffb3c8;
 
-  --footer-bg: #1a2133;
-  --footer-border: #39445e;
-  --footer-text: #aeb8cf;
+  --hero-grad: linear-gradient(135deg, #14233d 0%, #1a1c38 50%, #2a1729 100%);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 18px 44px rgba(0, 0, 0, 0.55);
+  --shadow-primary: 0 6px 18px rgba(77, 148, 255, 0.25);
+
+  --footer-bg: #131926;
+  --footer-border: #273043;
+  --footer-text: #a9b2c4;
+
+  color-scheme: dark;
 }

@@ -170,7 +170,14 @@ export default function CutStagePage() {
     const quad = corners as [Point, Point, Point, Point]
     await updateCut(cutId, { stageCorners: quad })
     await rememberStageCorners(id, quad, cut?.imageSize)
-    toast.success('무대 영역을 정했어요! 이제 친구들 이름을 붙여 볼까요?')
+    // 사진을 여러 장 한꺼번에 올렸다면, 아직 무대 영역이 없는 컷에도 같이 넣어 둔다.
+    // (같은 자리에서 찍은 사진이라 다시 찍지 않아도 된다. 사진 크기가 다른 컷은 건너뛴다)
+    const filled = await applyStageCornersToAllCuts(id, quad, cut?.imageSize, { onlyEmpty: true })
+    toast.success(
+      filled > 0
+        ? `무대 영역을 정했어요! 함께 올린 컷 ${filled}개에도 넣어 두었어요.`
+        : '무대 영역을 정했어요! 이제 친구들 이름을 붙여 볼까요?',
+    )
     navigate(`/project/${id}/cut/${cutId}/people`)
   }
 
@@ -221,11 +228,27 @@ export default function CutStagePage() {
         }}
       />
 
-      <main className="app-main work-main" id="main-content">
+      <main className="app-main work-main has-save-bar" id="main-content">
         <div className="guide-bar" role="status">
-          <MapPin size={24} aria-hidden="true" />
+          <MapPin size={22} aria-hidden="true" />
           <span>{guide}</span>
         </div>
+
+        {/* 네 귀퉁이를 어떤 순서로 누르는지 한눈에 */}
+        {!valid && (
+          <ol className="corner-steps" aria-label="무대 귀퉁이 누르는 순서">
+            {CORNER_LABELS.map((label, i) => (
+              <li
+                key={label}
+                className={i < corners.length ? 'done' : i === corners.length ? 'current' : ''}
+                aria-current={i === corners.length ? 'step' : undefined}
+              >
+                <span className="corner-no">{i < corners.length ? <Check size={14} /> : i + 1}</span>
+                {label}
+              </li>
+            ))}
+          </ol>
+        )}
 
         {!done && savedCorners && (
           <div className="notice notice-action" role="note">
@@ -255,7 +278,7 @@ export default function CutStagePage() {
             type="button"
             role="tab"
             aria-selected={pane === 'photo'}
-            className={`btn btn-ghost${pane === 'photo' ? ' is-on' : ''}`}
+            className={pane === 'photo' ? 'is-on' : ''}
             onClick={() => setPane('photo')}
           >
             사진
@@ -264,7 +287,7 @@ export default function CutStagePage() {
             type="button"
             role="tab"
             aria-selected={pane === 'plan'}
-            className={`btn btn-ghost${pane === 'plan' ? ' is-on' : ''}`}
+            className={pane === 'plan' ? 'is-on' : ''}
             onClick={() => setPane('plan')}
           >
             무대 평면도
@@ -387,14 +410,28 @@ export default function CutStagePage() {
           </div>
         )}
 
-        <button
-          type="button"
-          className="btn btn-primary btn-big btn-block next-btn"
-          onClick={handleSave}
-          disabled={!valid}
-        >
-          <Check size={26} aria-hidden="true" />이 무대 영역으로 하고 이름 붙이기
-        </button>
+        <div className="save-bar">
+          <div className="save-bar-inner">
+            <div className="save-bar-status">
+              <span className="save-bar-count">
+                {Math.min(4, corners.length)}
+                <small>/4</small>
+              </span>
+              <span className="save-bar-label">
+                {valid ? '무대 영역 완성!' : done ? '모양을 고쳐 주세요' : '귀퉁이를 찍었어요'}
+              </span>
+            </div>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleSave}
+              disabled={!valid}
+            >
+              <Check size={22} aria-hidden="true" />
+              이름 붙이러 가기
+            </button>
+          </div>
+        </div>
       </main>
 
       {confirmDelete && (

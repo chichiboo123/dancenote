@@ -18,22 +18,22 @@ export interface PlanColors {
 
 const LIGHT: PlanColors = {
   bg: '#FFFFFF',
-  floor: '#F1D9B5',
-  plank: '#D8BC90',
-  tape: '#B5793F',
-  border: '#9C7B4C',
-  label: '#55607A',
-  centerMark: '#D8362A',
+  floor: '#F4E6D0',
+  plank: '#E4CDAA',
+  tape: '#C0823F',
+  border: '#B38A58',
+  label: '#5B6272',
+  centerMark: '#D32F2F',
 }
 
 const DARK: PlanColors = {
-  bg: '#1E2639',
-  floor: '#0E1320',
-  plank: '#222B41',
-  tape: '#5C6A8C',
-  border: '#66739A',
-  label: '#AEB8CF',
-  centerMark: '#FF7A6E',
+  bg: '#161C29',
+  floor: '#0B0F17',
+  plank: '#1B2232',
+  tape: '#56668A',
+  border: '#5D6B8C',
+  label: '#A9B2C4',
+  centerMark: '#FF7A70',
 }
 
 export function usePlanColors(): PlanColors {

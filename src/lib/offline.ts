@@ -1,7 +1,7 @@
 /** 인터넷 없이도 쓸 수 있게, 사람 인식에 필요한 파일을 미리 받아 둔다. */
 
 const FILES = [
-  'efficientdet_lite0.tflite',
+  'efficientdet_lite2.tflite',
   'wasm/vision_wasm_internal.js',
   'wasm/vision_wasm_internal.wasm',
   'wasm/vision_wasm_nosimd_internal.js',
@@ -43,8 +43,9 @@ export async function isOfflineReady(): Promise<boolean> {
   if (!offlineSupported()) return false
   try {
     const cache = await caches.open('dongseon-models')
-    const keys = await cache.keys()
-    return keys.length >= FILES.length
+    const urls = (await cache.keys()).map((r) => r.url)
+    // 모델을 바꾼 뒤에는 예전 파일이 남아 있어도 준비되지 않은 것으로 본다.
+    return FILES.every((name) => urls.some((url) => url.endsWith(`/models/${name}`)))
   } catch {
     return false
   }

@@ -19,7 +19,7 @@ function readSavedTheme(): ThemeName {
 function applyTheme(theme: ThemeName) {
   document.documentElement.dataset.theme = theme
   const meta = document.querySelector('meta[name="theme-color"]')
-  if (meta) meta.setAttribute('content', theme === 'dark' ? '#141A2B' : '#FFF8EC')
+  if (meta) meta.setAttribute('content', theme === 'dark' ? '#0E131D' : '#F5F7FB')
 }
 
 interface ThemeState {

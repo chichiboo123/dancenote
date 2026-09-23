@@ -230,9 +230,7 @@ export default function PlayPage() {
           title: '동선 재생은 이렇게 써요',
           body: (
             <>
-              <p>
-                ▶ 버튼을 누르면 컷 1 → 2 → 3 순서로 친구들이 움직여요. 속도도 고를 수 있어요.
-              </p>
+              <p>▶ 버튼을 누르면 컷 1 → 2 → 3 순서로 친구들이 움직여요. 속도도 고를 수 있어요.</p>
               <p>
                 아래 친구 이름을 누르면 <strong>그 친구만 진하게</strong> 보여요. 한 번 더 누르면
                 모두 다시 보여요.
@@ -270,148 +268,160 @@ export default function PlayPage() {
               </span>
             </div>
 
-            <StagePlan
-              stageWidthM={project.stageWidthM}
-              stageDepthM={project.stageDepthM}
-              marks={marks}
-              trails={trails}
-              showGrid={prefs.showGrid}
-              flipped={prefs.flipped}
-              stageRef={planStageRef}
-              onSelectMark={(markId) => setFocusId((prev) => (prev === markId ? null : markId))}
-            />
-
-            {/* 재생 조작 */}
-            <div className="play-bar">
-              <button
-                type="button"
-                className="btn btn-quiet btn-icon"
-                onClick={() => {
-                  setPlaying(false)
-                  seek(0)
-                }}
-                aria-label="처음으로"
-              >
-                <SkipBack size={24} aria-hidden="true" />
-              </button>
-
-              <button
-                type="button"
-                className="btn btn-primary btn-big play-button"
-                onClick={() => (playing ? setPlaying(false) : handlePlay())}
-              >
-                {playing ? (
-                  <>
-                    <Pause size={26} aria-hidden="true" />
-                    멈춤
-                  </>
-                ) : (
-                  <>
-                    <Play size={26} aria-hidden="true" />
-                    동선 재생
-                  </>
-                )}
-              </button>
-
-              <input
-                className="slider play-slider"
-                type="range"
-                min={0}
-                max={Math.max(0.001, lastIndex)}
-                step={0.01}
-                value={progress}
-                onChange={(e) => {
-                  setPlaying(false)
-                  seek(Number(e.target.value))
-                }}
-                aria-label="재생 위치"
+            <div className="play-layout">
+              <StagePlan
+                stageWidthM={project.stageWidthM}
+                stageDepthM={project.stageDepthM}
+                marks={marks}
+                trails={trails}
+                showGrid={prefs.showGrid}
+                flipped={prefs.flipped}
+                stageRef={planStageRef}
+                onSelectMark={(markId) => setFocusId((prev) => (prev === markId ? null : markId))}
               />
-            </div>
 
-            <div className="toolbar segmented" role="group" aria-label="재생 속도">
-              {(Object.keys(SPEED_LABELS) as PlaySpeed[]).map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  className={`btn btn-ghost${prefs.speed === s ? ' is-on' : ''}`}
-                  onClick={() => prefs.set({ speed: s })}
-                  aria-pressed={prefs.speed === s}
-                >
-                  {SPEED_LABELS[s]}
-                </button>
-              ))}
-            </div>
+              <div className="play-side">
+                {/* 재생 조작 */}
+                <div className="play-bar">
+                  <button
+                    type="button"
+                    className="btn btn-quiet btn-icon"
+                    onClick={() => {
+                      setPlaying(false)
+                      seek(0)
+                    }}
+                    aria-label="처음으로"
+                  >
+                    <SkipBack size={22} aria-hidden="true" />
+                  </button>
 
-            <div className="toolbar">
-              <button
-                type="button"
-                className={`btn btn-ghost${prefs.showTrails ? ' is-on' : ''}`}
-                onClick={() => prefs.set({ showTrails: !prefs.showTrails })}
-                aria-pressed={prefs.showTrails}
-              >
-                <Route size={22} aria-hidden="true" />
-                지나온 길
-              </button>
-              <button
-                type="button"
-                className={`btn btn-ghost${prefs.showGrid ? ' is-on' : ''}`}
-                onClick={() => prefs.set({ showGrid: !prefs.showGrid })}
-                aria-pressed={prefs.showGrid}
-              >
-                <Grid3x3 size={22} aria-hidden="true" />9구역 선
-              </button>
-              <button
-                type="button"
-                className={`btn btn-ghost${prefs.flipped ? ' is-on' : ''}`}
-                onClick={() => prefs.set({ flipped: !prefs.flipped })}
-                aria-pressed={prefs.flipped}
-              >
-                <FlipVertical2 size={22} aria-hidden="true" />
-                {prefs.flipped ? '무대에서 본 모습' : '객석에서 본 모습'}
-              </button>
-              <button type="button" className="btn btn-ghost" onClick={savePlanImage}>
-                <ImageDown size={22} aria-hidden="true" />
-                그림으로 저장
-              </button>
-              <PdfExportButton projectId={id} />
-            </div>
+                  <button
+                    type="button"
+                    className="btn btn-primary play-button"
+                    onClick={() => (playing ? setPlaying(false) : handlePlay())}
+                  >
+                    {playing ? (
+                      <>
+                        <Pause size={26} aria-hidden="true" />
+                        멈춤
+                      </>
+                    ) : (
+                      <>
+                        <Play size={26} aria-hidden="true" />
+                        동선 재생
+                      </>
+                    )}
+                  </button>
 
-            {/* 한 친구만 따라가기 */}
-            {students.length > 0 && (
-              <section>
-                <h2 className="section-title">
-                  <Users size={20} aria-hidden="true" /> 한 친구만 따라가기
-                </h2>
-                <div className="chip-grid">
-                  {students.map((s) => (
+                  <input
+                    className="slider play-slider"
+                    type="range"
+                    min={0}
+                    max={Math.max(0.001, lastIndex)}
+                    step={0.01}
+                    value={progress}
+                    onChange={(e) => {
+                      setPlaying(false)
+                      seek(Number(e.target.value))
+                    }}
+                    aria-label="재생 위치"
+                  />
+                </div>
+
+                <p className="side-label">재생 속도</p>
+                <div className="toolbar segmented" role="group" aria-label="재생 속도">
+                  {(Object.keys(SPEED_LABELS) as PlaySpeed[]).map((s) => (
                     <button
-                      key={s.id}
+                      key={s}
                       type="button"
-                      className={`picker-chip${focusId === s.id ? ' is-current' : ''}`}
-                      style={{
-                        background: s.color,
-                        color: textColorOn(s.color),
-                        opacity: focusId && focusId !== s.id ? 0.45 : 1,
-                      }}
-                      onClick={() => setFocusId((prev) => (prev === s.id ? null : s.id))}
-                      aria-pressed={focusId === s.id}
+                      className={`btn btn-ghost${prefs.speed === s ? ' is-on' : ''}`}
+                      onClick={() => prefs.set({ speed: s })}
+                      aria-pressed={prefs.speed === s}
                     >
-                      <span className="picker-name">{s.name}</span>
+                      {SPEED_LABELS[s]}
                     </button>
                   ))}
                 </div>
-                {focusId && (
+
+                <p className="side-label">보기</p>
+                <div className="toolbar">
                   <button
                     type="button"
-                    className="btn btn-ghost"
-                    onClick={() => setFocusId(null)}
-                    style={{ marginTop: 'var(--sp-3)' }}
+                    className={`btn btn-ghost btn-small${prefs.showTrails ? ' is-on' : ''}`}
+                    onClick={() => prefs.set({ showTrails: !prefs.showTrails })}
+                    aria-pressed={prefs.showTrails}
                   >
-                    모두 보기
+                    <Route size={20} aria-hidden="true" />
+                    지나온 길
                   </button>
+                  <button
+                    type="button"
+                    className={`btn btn-ghost btn-small${prefs.showGrid ? ' is-on' : ''}`}
+                    onClick={() => prefs.set({ showGrid: !prefs.showGrid })}
+                    aria-pressed={prefs.showGrid}
+                  >
+                    <Grid3x3 size={20} aria-hidden="true" />
+                    9구역 선
+                  </button>
+                  <button
+                    type="button"
+                    className={`btn btn-ghost btn-small${prefs.flipped ? ' is-on' : ''}`}
+                    onClick={() => prefs.set({ flipped: !prefs.flipped })}
+                    aria-pressed={prefs.flipped}
+                  >
+                    <FlipVertical2 size={20} aria-hidden="true" />
+                    {prefs.flipped ? '무대에서 본 모습' : '객석에서 본 모습'}
+                  </button>
+                </div>
+
+                {/* 한 친구만 따라가기 */}
+                {students.length > 0 && (
+                  <section>
+                    <p className="side-label">
+                      <Users size={14} aria-hidden="true" /> 한 친구만 따라가기
+                    </p>
+                    <div style={{ height: 'var(--sp-3)' }} />
+                    <div className="chip-grid">
+                      {students.map((s) => (
+                        <button
+                          key={s.id}
+                          type="button"
+                          className={`picker-chip${focusId === s.id ? ' is-current' : ''}`}
+                          style={{
+                            background: s.color,
+                            color: textColorOn(s.color),
+                            opacity: focusId && focusId !== s.id ? 0.45 : 1,
+                          }}
+                          onClick={() => setFocusId((prev) => (prev === s.id ? null : s.id))}
+                          aria-pressed={focusId === s.id}
+                        >
+                          <span className="picker-name">{s.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                    {focusId && (
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-small"
+                        onClick={() => setFocusId(null)}
+                        style={{ marginTop: 'var(--sp-3)' }}
+                      >
+                        모두 보기
+                      </button>
+                    )}
+                  </section>
                 )}
-              </section>
-            )}
+
+                <p className="side-label">내보내기</p>
+                <div className="toolbar">
+                  <button type="button" className="btn btn-ghost btn-small" onClick={savePlanImage}>
+                    <ImageDown size={20} aria-hidden="true" />
+                    그림으로 저장
+                  </button>
+                  <PdfExportButton projectId={id} />
+                </div>
+              </div>
+            </div>
 
             <CutTimeline
               projectId={id}

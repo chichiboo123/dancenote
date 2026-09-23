@@ -1,100 +1,113 @@
 /* ===== 공통 컴포넌트 ===== */
 
-/* --- 버튼 --- */
-/* 버튼 — KRDS 기준(뚜렷한 위계·크기 단계·모든 상태 정의)에 맞추되
-   동선노트의 따뜻한 색과 어린이용 큰 터치 영역을 지킨다. */
+/* --- 버튼 ---
+   KRDS 기준: 위계 3단계(주요 채움 / 보조 외곽선 / 조용한), 크기 단계, 모든 상태 정의.
+   어린이 손가락을 생각해 최소 44px, 기본 52px로 잡는다. */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--sp-2);
-  min-height: var(--tap-min); /* 56px — KRDS large 이상 */
-  padding: var(--sp-3) var(--sp-5);
-  border: var(--border-w-strong) solid transparent;
+  min-height: var(--tap-min);
+  padding: 10px var(--sp-5);
+  border: 1px solid transparent;
   border-radius: var(--r-md);
   background: var(--c-surface);
   color: var(--c-ink);
   font-family: var(--font-title);
   font-weight: 700;
-  font-size: 18px;
+  font-size: 17px;
   line-height: 1.3;
+  letter-spacing: -0.01em;
+  text-decoration: none;
   cursor: pointer;
   transition:
     transform 0.12s ease,
-    background 0.15s ease,
+    background-color 0.15s ease,
     border-color 0.15s ease,
-    box-shadow 0.15s ease;
+    box-shadow 0.15s ease,
+    color 0.15s ease;
   -webkit-tap-highlight-color: transparent;
 }
 
-/* 초점은 어디서나 같은 모양으로 (KRDS: 초점 표시 필수) */
 .btn:focus-visible {
   outline: 3px solid var(--c-focus);
   outline-offset: 2px;
 }
 
-.btn:active {
-  transform: translateY(2px) scale(0.99);
+.btn:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 .btn:disabled {
   background: var(--c-disabled-bg);
-  border-color: var(--c-disabled-bg);
+  border-color: transparent;
   color: var(--c-disabled-text);
   box-shadow: none;
   cursor: not-allowed;
 }
 
-.btn:disabled:hover {
-  transform: none;
-}
-
 .btn-primary {
   background: var(--c-primary);
   color: var(--c-on-primary);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-primary);
 }
 .btn-primary:hover:not(:disabled) {
   background: var(--c-primary-dark);
 }
+:root[data-theme='dark'] .btn-primary:hover:not(:disabled) {
+  color: var(--c-on-primary);
+}
 
+/* 보조(외곽선) */
 .btn-ghost {
   background: var(--c-surface);
   border-color: var(--c-border-strong);
   color: var(--c-ink);
 }
 .btn-ghost:hover:not(:disabled) {
-  background: var(--c-primary-soft);
-  border-color: var(--c-primary);
-  color: var(--c-primary-dark);
+  background: var(--c-surface-2);
+  border-color: var(--c-ink-faint);
 }
 
+/* 조용한 (머리말 아이콘 등) */
 .btn-quiet {
-  background: var(--c-surface);
-  border-color: var(--c-border);
-  box-shadow: var(--shadow-sm);
+  background: transparent;
+  border-color: transparent;
+  color: var(--c-ink);
+}
+.btn-quiet:hover:not(:disabled) {
+  background: var(--c-surface-2);
 }
 
 .btn-danger {
-  background: transparent;
-  border-color: var(--c-danger);
+  background: var(--c-surface);
+  border-color: color-mix(in srgb, var(--c-danger) 45%, transparent);
   color: var(--c-danger);
 }
 .btn-danger:hover:not(:disabled) {
-  background: var(--c-danger);
-  color: #fff;
+  background: var(--c-danger-soft);
+  border-color: var(--c-danger);
+}
+
+/* 켜짐 상태 (토글) */
+.btn.is-on {
+  background: var(--c-primary-soft);
+  border-color: color-mix(in srgb, var(--c-primary) 55%, transparent);
+  color: var(--c-primary);
 }
 
 .btn-big {
   min-height: var(--tap-big);
-  font-size: 21px;
-  padding: var(--sp-4) var(--sp-6);
-  border-radius: var(--r-lg);
+  font-size: 19px;
+  padding: var(--sp-3) var(--sp-6);
+  border-radius: 16px;
 }
 
 .btn-icon {
-  min-width: var(--tap-min);
-  padding: var(--sp-3);
+  min-width: 48px;
+  min-height: 48px;
+  padding: var(--sp-2);
 }
 
 .btn-block {
@@ -104,17 +117,59 @@
 /* 작은 크기 (보조 동작용, 그래도 44px 이상) */
 .btn-small {
   min-height: 44px;
-  padding: var(--sp-2) var(--sp-4);
-  font-size: 16px;
+  padding: 6px var(--sp-4);
+  font-size: 15px;
+  border-radius: 10px;
+}
+
+/* 동그란 아이콘 버튼 (사진 확대 등) */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.icon-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.16);
+}
+.icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn svg,
+.chip svg,
+.picker-chip svg {
+  flex: none;
 }
 
 /* --- 카드 --- */
 .card {
   background: var(--c-surface);
-  border: var(--border-w) solid var(--c-border);
+  border: 1px solid var(--c-border);
   border-radius: var(--r-lg);
   padding: var(--sp-5);
   box-shadow: var(--shadow-sm);
+}
+
+/* 작업 화면의 조작 묶음 */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+}
+.panel > .toolbar {
+  margin-top: 0;
 }
 
 /* --- 입력 --- */
@@ -124,13 +179,36 @@
   gap: var(--sp-2);
 }
 
-.field > label {
+.field > label,
+.field-row > label {
   font-family: var(--font-title);
   font-weight: 700;
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .field .hint {
+  font-size: 14px;
+  color: var(--c-ink-soft);
+}
+
+.field-compact {
+  gap: 2px;
+}
+
+.field-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.field-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--c-primary);
+}
+
+.hint {
   font-size: 15px;
   color: var(--c-ink-soft);
 }
@@ -140,11 +218,23 @@
   width: 100%;
   min-height: var(--tap-min);
   padding: var(--sp-3) var(--sp-4);
-  border: var(--border-w-strong) solid var(--c-border-strong);
+  border: 1px solid var(--c-border-strong);
   border-radius: var(--r-md);
   background: var(--c-surface);
-  font-size: 18px;
-  transition: border-color 0.15s ease;
+  font-size: 17px;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: var(--c-ink-faint);
+}
+
+.input:hover,
+.textarea:hover {
+  border-color: var(--c-ink-faint);
 }
 
 .textarea {
@@ -157,7 +247,7 @@
 .textarea:focus {
   border-color: var(--c-primary);
   outline: none;
-  box-shadow: 0 0 0 4px var(--c-primary-soft);
+  box-shadow: 0 0 0 4px var(--c-primary-ring);
 }
 
 /* --- 안내 상자 --- */
@@ -165,13 +255,16 @@
   display: flex;
   gap: var(--sp-3);
   align-items: flex-start;
-  padding: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
   border-radius: var(--r-md);
-  background: var(--c-surface-2);
-  border: var(--border-w-strong) dashed var(--c-border-strong);
-  font-size: 16px;
-  line-height: 1.55;
-  color: var(--c-ink-soft);
+  background: var(--tint-blue);
+  color: var(--tint-blue-ink);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.notice strong {
+  color: inherit;
 }
 
 .notice svg {
@@ -179,11 +272,39 @@
   margin-top: 2px;
 }
 
+.notice-warn {
+  background: var(--tint-yellow);
+  color: var(--tint-yellow-ink);
+}
+
+.notice-action {
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.notice-action > span {
+  flex: 1;
+  min-width: 200px;
+}
+
+.notice-action .btn {
+  flex: none;
+}
+
 /* --- 빈 화면 안내 --- */
 .empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
   text-align: center;
   padding: var(--sp-7) var(--sp-4);
   color: var(--c-ink-soft);
+}
+
+.empty > svg {
+  color: var(--c-ink-faint);
+  margin-bottom: var(--sp-2);
 }
 
 /* --- 학생 칩 --- */
@@ -191,16 +312,22 @@
   display: inline-flex;
   align-items: center;
   gap: var(--sp-2);
-  min-height: var(--tap-min);
-  padding: var(--sp-2) var(--sp-4);
+  min-height: 48px;
+  padding: 6px var(--sp-4);
   border-radius: var(--r-pill);
-  border: 3px solid #fff;
+  border: 2px solid var(--c-surface);
   box-shadow: var(--shadow-sm);
   font-family: var(--font-title);
   font-weight: 700;
-  font-size: 18px;
+  font-size: 17px;
   cursor: pointer;
-  transition: transform 0.12s ease;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.15s ease;
+}
+
+.chip:hover {
+  box-shadow: var(--shadow-md);
 }
 
 .chip:active {
@@ -209,14 +336,27 @@
 
 .chip .chip-role {
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 500;
   opacity: 0.85;
 }
 
-/* --- 단계 표시 ①②③ --- */
-/* --- 버튼 줄 --- */
-/* 한 줄에 들어가는 만큼 나눠 담고, 남는 자리가 생기지 않도록 고르게 늘린다.
-   줄이 바뀌어 버튼 하나만 남으면 그 버튼이 그 줄을 다 채운다. */
+.count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: var(--r-pill);
+  background: var(--c-primary-soft);
+  color: var(--c-primary);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* --- 버튼 줄 ---
+   한 줄에 들어가는 만큼 나눠 담고, 남는 자리가 생기지 않도록 고르게 늘린다. */
 .toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -225,16 +365,40 @@
 }
 
 .toolbar > .btn {
-  flex: 1 1 160px;
+  flex: 1 1 150px;
 }
 
-/* 버튼이 하나뿐일 때는 너무 넓어지지 않게 */
 .toolbar > .btn:only-child {
   flex: 0 1 auto;
   min-width: 180px;
   max-width: 320px;
 }
 
+.toolbar.segmented {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--c-surface-2);
+}
+
+.toolbar.segmented > .btn {
+  flex: none;
+  min-height: 44px;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  font-size: 16px;
+}
+
+.toolbar.segmented > .btn.is-on {
+  background: var(--c-surface);
+  color: var(--c-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+/* --- 단계 표시 ①②③ --- */
 .steps {
   display: flex;
   align-items: center;
@@ -249,7 +413,12 @@
   display: inline-flex;
   align-items: center;
   gap: var(--sp-2);
-  font-size: 15px;
+  padding: 4px 12px 4px 4px;
+  border-radius: var(--r-pill);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  font-size: 14px;
+  font-weight: 600;
   color: var(--c-ink-soft);
 }
 
@@ -257,52 +426,46 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 24px;
+  height: 24px;
   border-radius: var(--r-pill);
   background: var(--c-surface-2);
-  border: var(--border-w-strong) solid var(--c-border-strong);
   font-family: var(--font-title);
   font-weight: 700;
-  font-size: 16px;
+  font-size: 13px;
 }
 
 .steps li[aria-current='step'] {
-  color: var(--c-ink);
+  color: var(--c-primary);
+  border-color: color-mix(in srgb, var(--c-primary) 40%, transparent);
+  background: var(--c-primary-soft);
 }
 
 .steps li[aria-current='step'] .step-no {
   background: var(--c-primary);
-  border-color: var(--c-primary);
   color: var(--c-on-primary);
 }
 
 .steps li.done .step-no {
   background: var(--c-mint);
-  border-color: var(--c-mint);
-  color: #06342a;
+  color: #fff;
 }
 
 /* --- 작은 축하 애니메이션 --- */
 @keyframes pop-in {
   0% {
-    transform: scale(0.6);
+    transform: scale(0.94);
     opacity: 0;
-  }
-  70% {
-    transform: scale(1.08);
-    opacity: 1;
   }
   100% {
     transform: scale(1);
+    opacity: 1;
   }
 }
 
 .pop-in {
-  animation: pop-in 0.28s ease-out;
+  animation: pop-in 0.24s ease-out;
 }
-
-/* ===== 다듬기 (완성도 올리기) ===== */
 
 /* 본문으로 바로 가기 (키보드 사용자용) */
 .skip-link {
@@ -324,10 +487,10 @@
 /* 불러오는 중 표시 */
 .spinner {
   display: inline-block;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: var(--r-pill);
-  border: 4px solid var(--c-border);
+  border: 3px solid var(--c-border);
   border-top-color: var(--c-primary);
   animation: spin 0.9s linear infinite;
 }
@@ -389,12 +552,12 @@
   display: flex;
   align-items: center;
   gap: var(--sp-3);
-  padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4);
+  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-4);
   border-radius: var(--r-pill);
-  background: var(--c-ink);
+  background: #1a1d24;
   color: #fff;
   box-shadow: var(--shadow-lg);
-  font-size: 16px;
+  font-size: 15px;
   animation: pop-in 0.3s ease-out;
   max-width: calc(100vw - var(--sp-5) * 2);
 }
@@ -402,42 +565,7 @@
 .update-notice .btn {
   min-height: 44px;
   padding: var(--sp-2) var(--sp-4);
-  font-size: 16px;
+  font-size: 15px;
   white-space: nowrap;
-}
-
-/* 버튼을 누르는 느낌을 조금 더 또렷하게 */
-.btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-}
-
-.btn:active:not(:disabled) {
-  transform: translateY(1px) scale(0.99);
-}
-
-/* 카드가 살짝 떠 보이게 */
-.card {
-  transition: box-shadow 0.18s ease;
-}
-
-/* 아이콘과 글자 사이 정렬 */
-.btn svg,
-.chip svg,
-.picker-chip svg {
-  flex: none;
-}
-
-/* 안내 상자 안에 버튼이 들어가는 경우 */
-.notice-action {
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.notice-action > span {
-  flex: 1;
-  min-width: 200px;
-}
-
-.notice-action .btn {
-  flex: none;
+  border-radius: var(--r-pill);
 }

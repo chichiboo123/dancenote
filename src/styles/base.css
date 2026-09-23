@@ -22,6 +22,9 @@ body {
   color: var(--c-ink);
   background: var(--c-bg);
   -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.005em;
   /* 숫자는 자리수가 흔들리지 않게 */
   font-variant-numeric: tabular-nums;
 }
@@ -32,19 +35,27 @@ h3,
 h4 {
   font-family: var(--font-title);
   font-weight: 700;
-  line-height: 1.35;
+  line-height: 1.4;
   margin: 0;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 
 h1 {
   font-size: 28px;
 }
 h2 {
-  font-size: 23px;
+  font-size: 22px;
 }
 h3 {
-  font-size: 20px;
+  font-size: 18px;
+}
+
+a {
+  color: var(--c-primary);
+}
+
+::selection {
+  background: var(--c-primary-ring);
 }
 
 p {

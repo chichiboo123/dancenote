@@ -1,6 +1,15 @@
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ArrowRight, Camera, Check, Download, Pencil, PlayCircle, Users } from 'lucide-react'
+import {
+  ArrowRight,
+  Camera,
+  Check,
+  ChevronRight,
+  Download,
+  Pencil,
+  PlayCircle,
+  Users,
+} from 'lucide-react'
 import CutTimeline from '../components/CutTimeline'
 import { ExportProjectButton } from '../components/BackupButtons'
 import PdfExportButton from '../components/PdfExportButton'
@@ -103,30 +112,41 @@ export default function ProjectPage() {
         {/* 2. 만들기 — 이 공연에서 할 수 있는 세 가지 */}
         <div className="big-actions">
           <Link className="big-action" to={`/project/${id}/roster`}>
-            <span className="big-action-no">1</span>
-            <Users size={40} aria-hidden="true" />
+            <span className="big-action-no">1단계</span>
+            <span className="big-action-icon tone-blue">
+              <Users size={28} aria-hidden="true" />
+            </span>
             <span className="big-action-text">
               <strong>친구 명단</strong>
               <span>{students.length > 0 ? `${students.length}명 등록됨` : '이름을 넣어요'}</span>
             </span>
+            <ChevronRight className="big-action-arrow" size={22} aria-hidden="true" />
           </Link>
 
           <Link className="big-action" to={`/project/${id}/cut/new`}>
-            <span className="big-action-no">2</span>
-            <Camera size={40} aria-hidden="true" />
+            <span className="big-action-no">2단계</span>
+            <span className="big-action-icon tone-pink">
+              <Camera size={28} aria-hidden="true" />
+            </span>
             <span className="big-action-text">
               <strong>컷 기록하기</strong>
               <span>{cuts.length > 0 ? `컷 ${cuts.length}개` : '사진을 가져와요'}</span>
             </span>
+            <ChevronRight className="big-action-arrow" size={22} aria-hidden="true" />
           </Link>
 
           <Link className="big-action" to={`/project/${id}/play`}>
-            <span className="big-action-no">3</span>
-            <PlayCircle size={40} aria-hidden="true" />
+            <span className="big-action-no">3단계</span>
+            <span className="big-action-icon tone-green">
+              <PlayCircle size={28} aria-hidden="true" />
+            </span>
             <span className="big-action-text">
               <strong>동선 재생</strong>
-              <span>{cuts.length >= 2 ? '컷을 이어서 봐요' : '컷이 2개 이상이면 볼 수 있어요'}</span>
+              <span>
+                {cuts.length >= 2 ? '컷을 이어서 봐요' : '컷이 2개 이상이면 볼 수 있어요'}
+              </span>
             </span>
+            <ChevronRight className="big-action-arrow" size={22} aria-hidden="true" />
           </Link>
         </div>
 

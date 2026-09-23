@@ -17,6 +17,8 @@
     "jspdf": "^4.2.1",
     "konva": "^10.6.0",
     "lucide-react": "^1.47.0",
+    "material-icons": "^1.13.14",
+    "pretendard-gov": "^1.3.9",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-konva": "^19.3.0",

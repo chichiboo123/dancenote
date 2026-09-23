@@ -85,13 +85,13 @@ export default function Onboarding({ onClose }: { onClose: () => void }) {
 function ArtCamera() {
   return (
     <svg viewBox="0 0 240 150" role="img" aria-label="무대를 사진으로 찍는 모습">
-      <rect width="240" height="150" rx="14" fill="#FFF1D9" />
+      <rect width="240" height="150" rx="14" fill="#EAF3FD" />
       <path d="M60 110 L90 60 L160 60 L190 110 Z" fill="#F1D9B5" stroke="#C2AB86" strokeWidth="3" />
-      <circle cx="105" cy="82" r="8" fill="#FF6B4A" stroke="#fff" strokeWidth="3" />
-      <circle cx="140" cy="80" r="8" fill="#3CC7A8" stroke="#fff" strokeWidth="3" />
-      <rect x="92" y="14" width="58" height="36" rx="8" fill="#1F2A44" />
-      <circle cx="121" cy="32" r="12" fill="#FFD23F" stroke="#fff" strokeWidth="3" />
-      <rect x="104" y="8" width="20" height="8" rx="4" fill="#1F2A44" />
+      <circle cx="105" cy="82" r="8" fill="#FF7A9C" stroke="#fff" strokeWidth="3" />
+      <circle cx="140" cy="80" r="8" fill="#00A68A" stroke="#fff" strokeWidth="3" />
+      <rect x="92" y="14" width="58" height="36" rx="8" fill="#1A1D24" />
+      <circle cx="121" cy="32" r="12" fill="#FFD84D" stroke="#fff" strokeWidth="3" />
+      <rect x="104" y="8" width="20" height="8" rx="4" fill="#1A1D24" />
     </svg>
   )
 }
@@ -99,11 +99,11 @@ function ArtCamera() {
 function ArtCorners() {
   return (
     <svg viewBox="0 0 240 150" role="img" aria-label="무대 네 귀퉁이를 차례로 누르는 모습">
-      <rect width="240" height="150" rx="14" fill="#FFF1D9" />
+      <rect width="240" height="150" rx="14" fill="#EAF3FD" />
       <path
         d="M70 45 L170 45 L200 118 L40 118 Z"
         fill="#F1D9B5"
-        stroke="#FFD23F"
+        stroke="#FFD84D"
         strokeWidth="4"
         strokeDasharray="9 7"
       />
@@ -114,7 +114,7 @@ function ArtCorners() {
         [40, 118, '4'],
       ].map(([cx, cy, n]) => (
         <g key={n as string}>
-          <circle cx={cx as number} cy={cy as number} r="15" fill="#FF6B4A" stroke="#fff" strokeWidth="4" />
+          <circle cx={cx as number} cy={cy as number} r="15" fill="#FF7A9C" stroke="#fff" strokeWidth="4" />
           <text
             x={cx as number}
             y={(cy as number) + 6}
@@ -134,12 +134,12 @@ function ArtCorners() {
 function ArtRoute() {
   return (
     <svg viewBox="0 0 240 150" role="img" aria-label="평면도 위에서 이름표가 움직이는 모습">
-      <rect width="240" height="150" rx="14" fill="#FFF1D9" />
+      <rect width="240" height="150" rx="14" fill="#EAF3FD" />
       <rect x="28" y="24" width="184" height="102" rx="8" fill="#F1D9B5" stroke="#C2AB86" strokeWidth="3" />
       <path
         d="M70 96 C 110 96, 120 50, 170 52"
         fill="none"
-        stroke="#1F2A44"
+        stroke="#1A1D24"
         strokeWidth="3"
         strokeDasharray="6 7"
         strokeLinecap="round"

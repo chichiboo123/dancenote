@@ -1,5 +1,5 @@
-import { CANVAS_FONT } from '../lib/canvasFont'
-import { useMemo, useRef } from 'react'
+import { CANVAS_FONT, useCanvasFontReady } from '../lib/canvasFont'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Arrow, Circle, Group, Layer, Line, Rect, Stage, Text } from 'react-konva'
 import type Konva from 'konva'
 import { useElementSize } from '../lib/useElementSize'
@@ -56,6 +56,21 @@ interface Props {
   onTapEmpty?: (x: number, y: number) => void
   /** 그림 파일로 저장할 때 쓰려고 캔버스를 밖으로 넘겨 준다. */
   stageRef?: React.RefObject<Konva.Stage | null>
+  /** 평면도 최대 높이(px). 없으면 화면 높이의 62%. */
+  maxHeight?: number
+}
+
+/** 평면도가 화면 높이를 넘지 않게 하는 최대 높이 */
+function useMaxPlanHeight(fixed?: number) {
+  const [h, setH] = useState(() =>
+    typeof window === 'undefined' ? 600 : Math.max(300, window.innerHeight * 0.62),
+  )
+  useEffect(() => {
+    const update = () => setH(Math.max(300, window.innerHeight * 0.62))
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
+  return fixed ?? h
 }
 
 const PAD = 34 // 라벨이 들어갈 바깥 여백
@@ -76,17 +91,26 @@ export default function StagePlan({
   onSelectMark,
   onTapEmpty,
   stageRef,
+  maxHeight,
 }: Props) {
   const { ref, width } = useElementSize<HTMLDivElement>()
   const colors = usePlanColors()
+  const fontReady = useCanvasFontReady()
   const longPressTimer = useRef<number | null>(null)
   // 길게 누르기가 이미 처리됐으면, 손을 뗄 때 '한 번 누르기'로 또 처리하지 않는다.
   const longPressFired = useRef(false)
 
+  const maxViewH = useMaxPlanHeight(maxHeight)
   const ratio = stageDepthM / stageWidthM
-  const floorW = Math.max(0, width - PAD * 2)
+  // 칸 너비에 맞추되, 화면 높이를 넘지 않도록 줄인다. (재생 버튼이 화면 밖으로 밀리지 않게)
+  const floorW = Math.max(
+    0,
+    Math.min(width - PAD * 2, (maxViewH - PAD * 2 - BOTTOM_EXTRA) / ratio),
+  )
   const floorH = floorW * ratio
   const viewH = floorH + PAD * 2 + BOTTOM_EXTRA
+  // 가로로 남는 자리는 양쪽에 똑같이 나눠 가운데에 둔다.
+  const PX = Math.max(PAD, (width - floorW) / 2)
 
   /**
    * 무대 좌표(0~1) → 화면 좌표.
@@ -94,15 +118,15 @@ export default function StagePlan({
    */
   const toView = useMemo(
     () => (x: number, y: number) => ({
-      x: PAD + (flipped ? 1 - x : x) * floorW,
+      x: PX + (flipped ? 1 - x : x) * floorW,
       y: PAD + (flipped ? 1 - y : y) * floorH,
     }),
-    [floorW, floorH, flipped],
+    [floorW, floorH, flipped, PX],
   )
 
   /** 화면 좌표 → 무대 좌표(0~1) */
   function toStage(px: number, py: number) {
-    const vx = Math.min(1, Math.max(0, (px - PAD) / floorW))
+    const vx = Math.min(1, Math.max(0, (px - PX) / floorW))
     const vy = Math.min(1, Math.max(0, (py - PAD) / floorH))
     return { x: flipped ? 1 - vx : vx, y: flipped ? 1 - vy : vy }
   }
@@ -116,6 +140,36 @@ export default function StagePlan({
   }, [floorH])
 
   const iconR = Math.max(16, Math.min(28, floorW / 18))
+
+  /**
+   * 이름표가 거의 같은 자리에 겹치면 글자를 읽을 수 없으므로, 화면에서만 살짝 벌려 보여 준다.
+   * (저장된 자리는 그대로다. 끌어서 옮기면 손가락이 있는 곳으로 정확히 간다)
+   */
+  const viewPos = useMemo(() => {
+    const pts = marks.map((m) => toView(m.x, m.y))
+    const minGap = iconR * 1.7
+    for (let iter = 0; iter < 4; iter++) {
+      for (let i = 0; i < pts.length; i++) {
+        for (let j = i + 1; j < pts.length; j++) {
+          let dx = pts[j].x - pts[i].x
+          let dy = pts[j].y - pts[i].y
+          let d = Math.hypot(dx, dy)
+          if (d >= minGap) continue
+          if (d < 0.01) {
+            dx = 1
+            dy = 0
+            d = 1
+          }
+          const push = (minGap - d) / 2
+          pts[i] = { x: pts[i].x - (dx / d) * push, y: pts[i].y - (dy / d) * push }
+          pts[j] = { x: pts[j].x + (dx / d) * push, y: pts[j].y + (dy / d) * push }
+        }
+      }
+    }
+    const map: Record<string, { x: number; y: number }> = {}
+    marks.forEach((m, i) => (map[m.id] = pts[i]))
+    return map
+  }, [marks, toView, iconR])
 
   function startLongPress(stage: Konva.Stage) {
     if (!onLongPressEmpty) return
@@ -172,13 +226,13 @@ export default function StagePlan({
           onPointerMove={cancelLongPress}
           onPointerLeave={cancelLongPress}
         >
-          <Layer listening={false}>
+          <Layer listening={false} key={fontReady ? 'bg-f' : 'bg'}>
             {/* 그림으로 저장할 때 바탕이 비지 않도록 */}
             <Rect x={0} y={0} width={width} height={viewH} fill={colors.bg} />
 
             {/* 무대 마루 */}
             <Rect
-              x={PAD}
+              x={PX}
               y={PAD}
               width={floorW}
               height={floorH}
@@ -188,7 +242,7 @@ export default function StagePlan({
             {planks.map((y, i) => (
               <Line
                 key={i}
-                points={[PAD, PAD + y, PAD + floorW, PAD + y]}
+                points={[PX, PAD + y, PX + floorW, PAD + y]}
                 stroke={colors.plank}
                 strokeWidth={1}
                 opacity={0.4}
@@ -201,9 +255,9 @@ export default function StagePlan({
                 <Group key={`g${i}`}>
                   <Line
                     points={[
-                      PAD + (floorW / 3) * i,
+                      PX + (floorW / 3) * i,
                       PAD,
-                      PAD + (floorW / 3) * i,
+                      PX + (floorW / 3) * i,
                       PAD + floorH,
                     ]}
                     stroke={colors.tape}
@@ -212,9 +266,9 @@ export default function StagePlan({
                   />
                   <Line
                     points={[
-                      PAD,
+                      PX,
                       PAD + (floorH / 3) * i,
-                      PAD + floorW,
+                      PX + floorW,
                       PAD + (floorH / 3) * i,
                     ]}
                     stroke={colors.tape}
@@ -226,7 +280,7 @@ export default function StagePlan({
 
             {/* 무대 테두리 */}
             <Rect
-              x={PAD}
+              x={PX}
               y={PAD}
               width={floorW}
               height={floorH}
@@ -239,7 +293,7 @@ export default function StagePlan({
             {showMarks &&
               frontStageMarks().map((mark) => {
                 // 반대쪽에서 볼 때는 '앞쪽'이 화면 위가 된다.
-                const vx = PAD + (flipped ? 1 - mark.x : mark.x) * floorW
+                const vx = PX + (flipped ? 1 - mark.x : mark.x) * floorW
                 const edgeY = flipped ? PAD : PAD + floorH
                 const dir = flipped ? -1 : 1
                 const tickLen = mark.center ? 16 : 10
@@ -269,7 +323,7 @@ export default function StagePlan({
             {/* 라벨: 위쪽 무대 뒤, 아래쪽 객석 */}
             <Text
               text={flipped ? '객석' : '무대 뒤'}
-              x={PAD}
+              x={PX}
               y={showMarks && flipped ? 2 : 8}
               width={floorW}
               align="center"
@@ -279,7 +333,7 @@ export default function StagePlan({
             />
             <Text
               text={flipped ? '무대 뒤' : '객석'}
-              x={PAD}
+              x={PX}
               y={PAD + floorH + (showMarks && !flipped ? 26 : 8)}
               width={floorW}
               align="center"
@@ -289,7 +343,7 @@ export default function StagePlan({
             />
             <Text
               text={`${stageWidthM}m × ${stageDepthM}m`}
-              x={PAD}
+              x={PX}
               y={10}
               width={floorW}
               align="right"
@@ -355,9 +409,9 @@ export default function StagePlan({
           </Layer>
 
           {/* 학생 아이콘 */}
-          <Layer>
+          <Layer key={fontReady ? 'marks-f' : 'marks'}>
             {marks.map((m) => {
-              const pos = toView(m.x, m.y)
+              const pos = viewPos[m.id] ?? toView(m.x, m.y)
               return (
                 <Group
                   key={m.id}
