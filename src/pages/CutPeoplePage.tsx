@@ -2,19 +2,23 @@ import { CANVAS_FONT } from "../lib/canvasFont";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Group, Rect, Text } from "react-konva";
+import { Circle, Group, Line, Rect, Text } from "react-konva";
 import type Konva from "konva";
 import {
   Check,
+  EyeOff,
   FlipVertical2,
   Grid3x3,
   ImageDown,
   Loader2,
   MapPin,
   RefreshCw,
+  Sparkles,
   UserPlus,
   Undo2,
   Users,
+  ZoomIn,
+  ZoomOut,
 } from "lucide-react";
 import { toast } from "sonner";
 import AppHeader from "../components/AppHeader";
@@ -45,6 +49,45 @@ interface Spot {
   bbox?: [number, number, number, number];
   stage: Point;
   studentId?: string;
+  /** 사진 속 발 위치 (다리가 가려졌으면 짐작한 자리) */
+  foot?: Point;
+  footEstimated?: boolean;
+}
+
+/** 인식 결과의 발 위치 */
+function footOf(box: PersonBox): Point {
+  return box.foot ?? footPoint(box.bbox);
+}
+
+/**
+ * 지난 컷에서 가까이 있던 친구를 이번 컷의 이름 없는 자리에 짝지어 준다.
+ * 가장 가까운 짝부터 차례로 정하고, 너무 멀리 떨어진 짝은 만들지 않는다.
+ */
+function matchByPrevCut(
+  spots: Spot[],
+  prev: { studentId: string; x: number; y: number }[],
+  taken: Set<string>,
+): Record<string, string> {
+  const pairs: { key: string; studentId: string; d: number }[] = [];
+  for (const s of spots) {
+    if (s.studentId) continue;
+    for (const p of prev) {
+      if (taken.has(p.studentId)) continue;
+      const d = Math.hypot(p.x - s.stage.x, p.y - s.stage.y);
+      if (d < 0.32) pairs.push({ key: s.key, studentId: p.studentId, d });
+    }
+  }
+  pairs.sort((a, b) => a.d - b.d);
+  const usedKeys = new Set<string>();
+  const usedIds = new Set<string>();
+  const result: Record<string, string> = {};
+  for (const pair of pairs) {
+    if (usedKeys.has(pair.key) || usedIds.has(pair.studentId)) continue;
+    usedKeys.add(pair.key);
+    usedIds.add(pair.studentId);
+    result[pair.key] = pair.studentId;
+  }
+  return result;
 }
 
 /** 되돌리기에 쓰는 한 순간의 상태 */
@@ -96,6 +139,10 @@ export default function CutPeoplePage() {
   const [manual, setManual] = useState<Spot[]>([]);
   const [slider, setSlider] = useState(45);
   const [detecting, setDetecting] = useState(false);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  // 무대 밖(객석·무대 옆)에서 찾은 사람도 보여 줄지
+  const [showOffStage, setShowOffStage] = useState(false);
+  const [zoom, setZoom] = useState(1);
   const [detectError, setDetectError] = useState<string | null>(null);
   const [picking, setPicking] = useState<string | null>(null);
   // 직접 넣기: 이 학생을 다음에 누르는 자리에 놓는다.
@@ -149,7 +196,7 @@ export default function CutPeoplePage() {
           for (const box of prevBoxes) {
             const studentId = prevNamed[box.key];
             if (!studentId || hiddenRef.current[box.key]) continue;
-            const foot = footPoint(box.bbox);
+            const foot = footOf(box);
             const stage =
               movedRef.current[box.key] ??
               (mapperRef.current
@@ -174,23 +221,30 @@ export default function CutPeoplePage() {
     async (img: HTMLImageElement) => {
       setDetecting(true);
       setDetectError(null);
+      setProgress(null);
       try {
         const started = performance.now();
         // 낮은 기준으로 한 번만 찾아 두고, 슬라이더는 그 결과를 걸러 내기만 한다.
-        const boxes = await detectPeople(img, 0.15);
+        // 무대 영역을 알려 주면 무대 근처를 확대해서 뒷줄 친구까지 찾고, 무대 밖 사람은 가려낸다.
+        const boxes = await detectPeople(img, 0.12, {
+          stageCorners: cornersKey ? JSON.parse(cornersKey) : undefined,
+          onProgress: (done, total) => setProgress({ done, total }),
+        });
         // 다시 찾으면 네모 번호가 새로 매겨지므로, 이미 이름을 붙인 자리는
         // '직접 넣은 자리'로 옮겨 두어 이름이 사라지지 않게 한다.
         keepNamedSpots();
         setDetBoxes(boxes.map((b, i) => ({ ...b, key: `d${i}` })));
         const seconds = ((performance.now() - started) / 1000).toFixed(1);
         // 화면에 실제로 보이는 개수(민감도 슬라이더를 넘은 것)만 알려 준다.
-        const shown = boxes.filter(
-          (b) => b.score >= sliderToScore(slider),
-        ).length;
+        const passing = boxes.filter((b) => b.score >= sliderToScore(slider));
+        const shown = passing.filter((b) => !b.offStage).length;
+        const off = passing.length - shown;
         if (shown === 0) {
           toast("사람을 못 찾았어요. 빈 곳을 길게 눌러 직접 넣어 볼까요?");
         } else {
-          toast.success(`${shown}명을 찾았어요! (${seconds}초)`);
+          toast.success(
+            `${shown}명을 찾았어요! (${seconds}초)${off > 0 ? ` · 무대 밖 ${off}명은 뺐어요` : ""}`,
+          );
         }
       } catch (err) {
         console.error(err);
@@ -199,9 +253,10 @@ export default function CutPeoplePage() {
         );
       } finally {
         setDetecting(false);
+        setProgress(null);
       }
     },
-    [slider, keepNamedSpots],
+    [slider, keepNamedSpots, cornersKey],
   );
 
   // 저장된 결과가 있으면 그대로 불러오고, 없으면 사람을 찾는다.
@@ -253,13 +308,24 @@ export default function CutPeoplePage() {
   /** 화면에 보여 줄 자리 목록 */
   const spots: Spot[] = useMemo(() => {
     const fromDetection: Spot[] = detBoxes
-      .filter((b) => !hidden[b.key] && (b.score >= minScore || named[b.key]))
+      .filter(
+        (b) =>
+          !hidden[b.key] &&
+          ((b.score >= minScore && (showOffStage || !b.offStage)) || named[b.key]),
+      )
       .map((b) => {
-        const foot = footPoint(b.bbox);
+        const foot = footOf(b);
         const stage =
           moved[b.key] ??
           (mapper ? clampToStage(mapper.toStage(foot)) : { x: 0.5, y: 0.5 });
-        return { key: b.key, bbox: b.bbox, stage, studentId: named[b.key] };
+        return {
+          key: b.key,
+          bbox: b.bbox,
+          stage,
+          studentId: named[b.key],
+          foot,
+          footEstimated: b.footEstimated,
+        };
       });
 
     const fromManual: Spot[] = manual
@@ -271,7 +337,16 @@ export default function CutPeoplePage() {
       }));
 
     return [...fromDetection, ...fromManual];
-  }, [detBoxes, hidden, named, moved, manual, minScore, mapper]);
+  }, [detBoxes, hidden, named, moved, manual, minScore, mapper, showOffStage]);
+
+  /** 무대 밖이라서 숨겨 둔 사람 수 */
+  const offStageCount = useMemo(
+    () =>
+      detBoxes.filter(
+        (b) => b.offStage && !hidden[b.key] && !named[b.key] && b.score >= minScore,
+      ).length,
+    [detBoxes, hidden, named, minScore],
+  );
 
   const studentById = useMemo(() => {
     const map: Record<string, Student> = {};
@@ -303,6 +378,23 @@ export default function CutPeoplePage() {
       if (d < 0.25 && (!best || d < best.d)) best = { id: p.studentId, d };
     }
     return best?.id;
+  }
+
+  /** 지난 컷에서 이어 붙일 수 있는 이름 수 */
+  const prevMatches = useMemo(
+    () => (prevCut ? matchByPrevCut(spots, prevCut.placements, placedIds) : {}),
+    [prevCut, spots, placedIds],
+  );
+  const prevMatchCount = Object.keys(prevMatches).length;
+
+  /** 지난 컷 자리를 보고 이름 없는 네모에 한꺼번에 이름을 붙인다. */
+  function autoNameFromPrev() {
+    if (prevMatchCount === 0) return;
+    remember("지난 컷처럼 이름 붙이기");
+    setNamed((prev) => ({ ...prev, ...prevMatches }));
+    toast.success(
+      `${prevMatchCount}명에게 지난 컷 이름을 붙였어요. 틀린 이름은 눌러서 고쳐요.`,
+    );
   }
 
   function addManualSpot(
@@ -550,12 +642,14 @@ export default function CutPeoplePage() {
         }}
       />
 
-      <main className="app-main work-main" id="main-content">
+      <main className="app-main work-main has-save-bar" id="main-content">
         <div className="guide-bar" role="status">
           {placingStudentId ? (
-            <UserPlus size={24} aria-hidden="true" />
+            <UserPlus size={22} aria-hidden="true" />
+          ) : detecting ? (
+            <Loader2 size={22} className="spin" aria-hidden="true" />
           ) : (
-            <Users size={24} aria-hidden="true" />
+            <Users size={22} aria-hidden="true" />
           )}
           <span>
             {placingStudentId
@@ -567,7 +661,7 @@ export default function CutPeoplePage() {
               : detecting
                 ? "사람을 찾는 중이에요…"
                 : unnamedCount > 0
-                  ? `네모를 눌러 이름을 붙여요 · 이름 붙인 친구 ${namedCount}명, 남은 네모 ${unnamedCount}개`
+                  ? `네모를 눌러 이름을 붙여요 · 남은 네모 ${unnamedCount}개`
                   : namedCount > 0
                     ? `모두 이름을 붙였어요! ${namedCount}명`
                     : cut?.imageBlob
@@ -576,8 +670,25 @@ export default function CutPeoplePage() {
           </span>
         </div>
 
+        {prevMatchCount > 0 && !detecting && !placingStudentId && (
+          <div className="suggest-bar pop-in">
+            <Sparkles size={22} aria-hidden="true" />
+            <span>
+              지난 컷과 비슷한 자리에 <strong>{prevMatchCount}명</strong>이 있어요.
+              한 번에 이름을 붙일까요?
+            </span>
+            <button
+              type="button"
+              className="btn btn-primary btn-small"
+              onClick={autoNameFromPrev}
+            >
+              지난 컷처럼 이름 붙이기
+            </button>
+          </div>
+        )}
+
         {detectError && (
-          <div className="notice" role="alert">
+          <div className="notice notice-warn" role="alert">
             <MapPin size={22} aria-hidden="true" />
             <span>{detectError}</span>
           </div>
@@ -588,7 +699,7 @@ export default function CutPeoplePage() {
             type="button"
             role="tab"
             aria-selected={pane === "photo"}
-            className={`btn btn-ghost${pane === "photo" ? " is-on" : ""}`}
+            className={pane === "photo" ? "is-on" : ""}
             onClick={() => setPane("photo")}
           >
             사진
@@ -597,7 +708,7 @@ export default function CutPeoplePage() {
             type="button"
             role="tab"
             aria-selected={pane === "plan"}
-            className={`btn btn-ghost${pane === "plan" ? " is-on" : ""}`}
+            className={pane === "plan" ? "is-on" : ""}
             onClick={() => setPane("plan")}
           >
             무대 평면도
@@ -611,65 +722,128 @@ export default function CutPeoplePage() {
             aria-label="사진"
           >
             {image ? (
-              <PhotoCanvas
-                image={image}
-                corners={cut.stageCorners ?? []}
-                showCorners={false}
-                onTapImage={handleTapPhoto}
-                onLongPress={handleLongPressPhoto}
-              >
-                {(scale) =>
-                  spots
-                    .filter((s) => s.bbox)
-                    .map((s) => {
-                      const [bx, by, bw, bh] = s.bbox!;
-                      const student = s.studentId
-                        ? studentById[s.studentId]
-                        : undefined;
-                      const color = student?.color ?? "#FF6B4A";
-                      return (
-                        <Group
-                          key={s.key}
-                          x={bx * scale}
-                          y={by * scale}
-                          onClick={() => setPicking(s.key)}
-                          onTap={() => setPicking(s.key)}
-                        >
-                          <Rect
-                            name="overlay"
-                            width={bw * scale}
-                            height={bh * scale}
-                            cornerRadius={10}
-                            stroke={color}
-                            strokeWidth={4}
-                            dash={student ? undefined : [10, 7]}
-                            fill="rgba(255,255,255,0.05)"
-                          />
-                          <Rect
-                            name="overlay"
-                            y={-26}
-                            width={Math.max(
-                              46,
-                              (student?.name.length ?? 1) * 17 + 16,
+              <div className="photo-stage">
+                <PhotoCanvas
+                  image={image}
+                  corners={cut.stageCorners ?? []}
+                  showCorners={false}
+                  zoom={zoom}
+                  magnify={zoom === 1}
+                  onTapImage={handleTapPhoto}
+                  onLongPress={handleLongPressPhoto}
+                >
+                  {(scale) =>
+                    spots
+                      .filter((s) => s.bbox)
+                      .map((s) => {
+                        const [bx, by, bw, bh] = s.bbox!;
+                        const student = s.studentId
+                          ? studentById[s.studentId]
+                          : undefined;
+                        const color = student?.color ?? "#256EF4";
+                        const foot = s.foot ?? { x: bx + bw / 2, y: by + bh };
+                        const label = student?.name ?? "?";
+                        return (
+                          <Group
+                            key={s.key}
+                            x={bx * scale}
+                            y={by * scale}
+                            onClick={() => setPicking(s.key)}
+                            onTap={() => setPicking(s.key)}
+                          >
+                            <Rect
+                              name="overlay"
+                              width={bw * scale}
+                              height={bh * scale}
+                              cornerRadius={8}
+                              stroke={color}
+                              strokeWidth={student ? 3.5 : 2.5}
+                              dash={student ? undefined : [8, 6]}
+                              fill={student ? "rgba(255,255,255,0.08)" : "rgba(37,110,244,0.08)"}
+                              shadowColor="#000"
+                              shadowOpacity={0.25}
+                              shadowBlur={4}
+                            />
+                            {/* 발 위치: 가려져서 짐작한 경우 점선으로 이어 준다 */}
+                            {s.footEstimated && (
+                              <Line
+                                listening={false}
+                                points={[
+                                  (bw / 2) * scale,
+                                  bh * scale,
+                                  (foot.x - bx) * scale,
+                                  (foot.y - by) * scale,
+                                ]}
+                                stroke={color}
+                                strokeWidth={2}
+                                dash={[4, 4]}
+                              />
                             )}
-                            height={26}
-                            cornerRadius={8}
-                            fill={color}
-                          />
-                          <Text
-                            text={student?.name ?? "?"}
-                            x={8}
-                            y={-22}
-                            fontSize={16}
-                            fontFamily={CANVAS_FONT}
-                            fill={textColorOn(color)}
-                            listening={false}
-                          />
-                        </Group>
-                      );
-                    })
-                }
-              </PhotoCanvas>
+                            <Circle
+                              listening={false}
+                              x={(foot.x - bx) * scale}
+                              y={(foot.y - by) * scale}
+                              radius={5}
+                              fill={color}
+                              stroke="#fff"
+                              strokeWidth={2}
+                            />
+                            <Rect
+                              name="overlay"
+                              y={-24}
+                              width={Math.max(30, label.length * 15 + 14)}
+                              height={22}
+                              cornerRadius={11}
+                              fill={color}
+                            />
+                            <Text
+                              text={label}
+                              y={-21}
+                              width={Math.max(30, label.length * 15 + 14)}
+                              align="center"
+                              fontSize={14}
+                              fontStyle="bold"
+                              fontFamily={CANVAS_FONT}
+                              fill={textColorOn(color)}
+                              listening={false}
+                            />
+                          </Group>
+                        );
+                      })
+                  }
+                </PhotoCanvas>
+                {detecting && (
+                  <div className="scan-overlay" role="status">
+                    <span className="scan-line" aria-hidden="true" />
+                    <span className="scan-label">
+                      <Loader2 size={18} className="spin" aria-hidden="true" />
+                      사람을 찾는 중
+                      {progress ? ` ${Math.round((progress.done / progress.total) * 100)}%` : "…"}
+                    </span>
+                  </div>
+                )}
+                <div className="zoom-tools">
+                  <button
+                    type="button"
+                    className="icon-btn"
+                    onClick={() => setZoom((z) => Math.max(1, z - 0.5))}
+                    disabled={zoom <= 1}
+                    aria-label="사진 작게 보기"
+                  >
+                    <ZoomOut size={20} aria-hidden="true" />
+                  </button>
+                  <span className="zoom-value">{Math.round(zoom * 100)}%</span>
+                  <button
+                    type="button"
+                    className="icon-btn"
+                    onClick={() => setZoom((z) => Math.min(3, z + 0.5))}
+                    disabled={zoom >= 3}
+                    aria-label="사진 크게 보기"
+                  >
+                    <ZoomIn size={20} aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
             ) : (
               <div className="empty">
                 <MapPin size={44} aria-hidden="true" />
@@ -682,9 +856,16 @@ export default function CutPeoplePage() {
             )}
 
             {image && (
-              <>
-                <div className="field">
-                  <label htmlFor="sens">사람을 얼마나 많이 찾을까요?</label>
+              <div className="panel">
+                <div className="field field-compact">
+                  <div className="field-row">
+                    <label htmlFor="sens">사람 찾기 민감도</label>
+                    <span className="field-value">
+                      {detBoxes.length > 0
+                        ? `찾은 사람 ${spots.filter((s) => s.bbox).length}명`
+                        : ""}
+                    </span>
+                  </div>
                   <input
                     id="sens"
                     className="slider"
@@ -697,8 +878,8 @@ export default function CutPeoplePage() {
                     disabled={detBoxes.length === 0}
                   />
                   <div className="slider-ends">
-                    <span>← 더 많이 찾기</span>
-                    <span>덜 찾기 →</span>
+                    <span>더 많이 찾기</span>
+                    <span>확실한 것만</span>
                   </div>
                 </div>
 
@@ -709,7 +890,7 @@ export default function CutPeoplePage() {
                     onClick={undo}
                     disabled={history.length === 0}
                   >
-                    <Undo2 size={22} aria-hidden="true" />
+                    <Undo2 size={20} aria-hidden="true" />
                     되돌리기
                   </button>
                   <button
@@ -719,14 +900,25 @@ export default function CutPeoplePage() {
                     disabled={!image || detecting}
                   >
                     {detecting ? (
-                      <Loader2 size={22} className="spin" aria-hidden="true" />
+                      <Loader2 size={20} className="spin" aria-hidden="true" />
                     ) : (
-                      <RefreshCw size={22} aria-hidden="true" />
+                      <RefreshCw size={20} aria-hidden="true" />
                     )}
                     다시 찾기
                   </button>
+                  {(offStageCount > 0 || showOffStage) && (
+                    <button
+                      type="button"
+                      className={`btn btn-ghost${showOffStage ? " is-on" : ""}`}
+                      onClick={() => setShowOffStage((v) => !v)}
+                      aria-pressed={showOffStage}
+                    >
+                      <EyeOff size={20} aria-hidden="true" />
+                      {showOffStage ? "무대 밖 사람 숨기기" : `무대 밖 ${offStageCount}명 보기`}
+                    </button>
+                  )}
                 </div>
-              </>
+              </div>
             )}
 
             {!image && (
@@ -737,7 +929,7 @@ export default function CutPeoplePage() {
                   onClick={undo}
                   disabled={history.length === 0}
                 >
-                  <Undo2 size={22} aria-hidden="true" />
+                  <Undo2 size={20} aria-hidden="true" />
                   되돌리기
                 </button>
               </div>
@@ -771,7 +963,7 @@ export default function CutPeoplePage() {
                 onClick={() => prefs.set({ showGrid: !prefs.showGrid })}
                 aria-pressed={prefs.showGrid}
               >
-                <Grid3x3 size={22} aria-hidden="true" />
+                <Grid3x3 size={20} aria-hidden="true" />
                 9구역 선
               </button>
               <button
@@ -781,7 +973,7 @@ export default function CutPeoplePage() {
                 aria-pressed={prefs.flipped}
                 title="무대를 반대쪽에서 봐요"
               >
-                <FlipVertical2 size={22} aria-hidden="true" />
+                <FlipVertical2 size={20} aria-hidden="true" />
                 {prefs.flipped ? "무대에서 본 모습" : "객석에서 본 모습"}
               </button>
               <button
@@ -789,7 +981,7 @@ export default function CutPeoplePage() {
                 className="btn btn-ghost"
                 onClick={savePlanImage}
               >
-                <ImageDown size={22} aria-hidden="true" />
+                <ImageDown size={20} aria-hidden="true" />
                 그림으로 저장
               </button>
             </div>
@@ -803,6 +995,9 @@ export default function CutPeoplePage() {
         <section className="missing-wrap">
           <h2 className="section-title">
             <UserPlus size={20} aria-hidden="true" /> 아직 자리를 안 정한 친구
+            {missingStudents.length > 0 && (
+              <span className="count-badge">{missingStudents.length}</span>
+            )}
           </h2>
           {missingStudents.length === 0 ? (
             <p className="hint">모든 친구가 자리를 잡았어요! 👏</p>
@@ -841,7 +1036,7 @@ export default function CutPeoplePage() {
               {placingStudentId && (
                 <button
                   type="button"
-                  className="btn btn-ghost"
+                  className="btn btn-ghost btn-small"
                   onClick={() => setPlacingStudentId(null)}
                   style={{ marginTop: "var(--sp-3)" }}
                 >
@@ -852,13 +1047,24 @@ export default function CutPeoplePage() {
           )}
         </section>
 
-        <button
-          type="button"
-          className="btn btn-primary btn-big btn-block next-btn"
-          onClick={handleSave}
-        >
-          <Check size={26} aria-hidden="true" />컷 저장하기
-        </button>
+        <div className="save-bar">
+          <div className="save-bar-inner">
+            <div className="save-bar-status">
+              <span className="save-bar-count">
+                {namedCount}
+                <small>/{students.length}명</small>
+              </span>
+              <span className="save-bar-label">자리를 정했어요</span>
+            </div>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleSave}
+            >
+              <Check size={22} aria-hidden="true" />컷 저장하기
+            </button>
+          </div>
+        </div>
       </main>
 
       {picking && (

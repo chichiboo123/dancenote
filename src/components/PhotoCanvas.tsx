@@ -21,6 +21,8 @@ interface Props {
   children?: (scale: number) => React.ReactNode
   /** 돋보기 사용 여부 */
   magnify?: boolean
+  /** 확대 배율 (1 = 칸에 꼭 맞게). 1보다 크면 사진 칸 안에서 밀어서 본다. */
+  zoom?: number
 }
 
 /**
@@ -55,6 +57,7 @@ export default function PhotoCanvas({
   onMoveCorner,
   children,
   magnify = true,
+  zoom = 1,
 }: Props) {
   const { ref, width } = useElementSize<HTMLDivElement>()
   const [lens, setLens] = useState<Point | null>(null)
@@ -64,8 +67,10 @@ export default function PhotoCanvas({
 
   // 사진을 칸 너비에 맞추되, 세로로 긴 사진이 화면을 다 차지하지 않도록 높이도 제한한다.
   const maxHeight = useMaxPhotoHeight()
-  const scale =
+  const fitScale =
     width > 0 ? Math.min(width / image.width, maxHeight / image.height) : 0
+  const scale = fitScale * zoom
+  const zoomed = zoom > 1
   const viewW = Math.round(image.width * scale)
   const viewH = Math.round(image.height * scale)
 
@@ -92,7 +97,11 @@ export default function PhotoCanvas({
   }
 
   return (
-    <div className="photo-canvas" ref={ref}>
+    <div
+      className={`photo-canvas${zoomed ? ' is-zoomed' : ''}`}
+      ref={ref}
+      style={zoomed ? { maxHeight: Math.round(image.height * fitScale) } : undefined}
+    >
       <p
         className="sr-only"
         role="img"
@@ -154,6 +163,11 @@ export default function PhotoCanvas({
             cancelLongPress()
             setLens(null)
           }}
+          onPointerCancel={() => {
+            // 확대한 사진을 손가락으로 밀면 브라우저가 누르기를 취소한다.
+            cancelLongPress()
+            setLens(null)
+          }}
         >
           <Layer listening={false}>
             <KImage image={image} width={viewW} height={viewH} />
@@ -164,16 +178,16 @@ export default function PhotoCanvas({
               <Line
                 points={flatPoints}
                 closed={corners.length === 4}
-                stroke="#FFD23F"
+                stroke="#FFD84D"
                 strokeWidth={3}
                 dash={[10, 8]}
-                shadowColor="#1F2A44"
+                shadowColor="#0E131D"
                 shadowBlur={4}
                 listening={false}
               />
             )}
             {showCorners && corners.length === 4 && (
-              <Line points={flatPoints} closed fill="rgba(255, 210, 63, 0.16)" listening={false} />
+              <Line points={flatPoints} closed fill="rgba(255, 216, 77, 0.16)" listening={false} />
             )}
 
             {showCorners &&
@@ -193,11 +207,11 @@ export default function PhotoCanvas({
                   }}
                   onDragEnd={() => setLens(null)}
                 >
-                  <Circle name="corner-marker" radius={22} fill="rgba(31,42,68,0.25)" />
+                  <Circle name="corner-marker" radius={22} fill="rgba(14,19,29,0.28)" />
                   <Circle
                     name="corner-marker"
                     radius={16}
-                    fill="#FF6B4A"
+                    fill="#2F80FF"
                     stroke="#ffffff"
                     strokeWidth={4}
                   />

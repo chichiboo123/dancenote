@@ -17,7 +17,8 @@ export default defineConfig({
       // 실제로 한 번 쓸 때(또는 '오프라인 준비' 버튼을 누를 때) 담는다.
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
-        globIgnores: ['models/**'],
+        // 글꼴 조각(약 120개)은 실제로 쓰는 글자의 조각만 받아서 담는다.
+        globIgnores: ['models/**', 'assets/PretendardGOV*'],
         navigateFallbackDenylist: [/^\/models\//],
         runtimeCaching: [
           {
@@ -31,14 +32,12 @@ export default defineConfig({
             },
           },
           {
-            // 글꼴 — 없어도 동작하지만, 담아 두면 오프라인에서도 글씨가 예쁘다.
-            urlPattern: ({ url }) =>
-              url.origin === 'https://fonts.googleapis.com' ||
-              url.origin === 'https://fonts.gstatic.com',
+            // 글꼴 조각 — 한 번 쓴 조각은 담아 두어 오프라인에서도 글씨가 예쁘다.
+            urlPattern: ({ url }) => /\/assets\/PretendardGOV[^/]*\.woff2$/.test(url.pathname),
             handler: 'CacheFirst',
             options: {
               cacheName: 'dongseon-fonts',
-              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              expiration: { maxEntries: 140, maxAgeSeconds: 60 * 60 * 24 * 365 },
               cacheableResponse: { statuses: [0, 200] },
             },
           },
@@ -53,8 +52,8 @@ export default defineConfig({
         scope: base,
         display: 'standalone',
         orientation: 'any',
-        background_color: '#FFF8EC',
-        theme_color: '#FFF8EC',
+        background_color: '#F5F7FB',
+        theme_color: '#F5F7FB',
         icons: [
           { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },

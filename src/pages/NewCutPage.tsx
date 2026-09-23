@@ -88,17 +88,25 @@ export default function NewCutPage() {
             <p>사진을 여는 중이에요…</p>
           </div>
         ) : (
-          <div className="big-actions">
+          <div className="big-actions four">
             <button type="button" className="big-action" onClick={() => cameraRef.current?.click()}>
-              <Camera size={40} aria-hidden="true" />
-              <strong>사진 찍기</strong>
-              <span>지금 바로 찍어요</span>
+              <span className="big-action-icon tone-blue">
+                <Camera size={28} aria-hidden="true" />
+              </span>
+              <span className="big-action-text">
+                <strong>사진 찍기</strong>
+                <span>지금 바로 찍어요</span>
+              </span>
             </button>
 
             <button type="button" className="big-action" onClick={() => pickRef.current?.click()}>
-              <Images size={40} aria-hidden="true" />
-              <strong>사진 올리기</strong>
-              <span>여러 장 한꺼번에 가능</span>
+              <span className="big-action-icon tone-green">
+                <Images size={28} aria-hidden="true" />
+              </span>
+              <span className="big-action-text">
+                <strong>사진 올리기</strong>
+                <span>여러 장 한꺼번에 가능</span>
+              </span>
             </button>
 
             <button
@@ -106,9 +114,13 @@ export default function NewCutPage() {
               className="big-action"
               onClick={() => navigate(`/project/${id}/video`)}
             >
-              <Film size={40} aria-hidden="true" />
-              <strong>영상 올리기</strong>
-              <span>보다가 장면을 골라요</span>
+              <span className="big-action-icon tone-pink">
+                <Film size={28} aria-hidden="true" />
+              </span>
+              <span className="big-action-text">
+                <strong>영상 올리기</strong>
+                <span>보다가 장면을 골라요</span>
+              </span>
             </button>
 
             <button
@@ -120,9 +132,13 @@ export default function NewCutPage() {
                 navigate(`/project/${id}/cut/${cutId}/people`)
               }}
             >
-              <PencilRuler size={40} aria-hidden="true" />
-              <strong>사진 없이 짜기</strong>
-              <span>평면도에 직접 놓아요</span>
+              <span className="big-action-icon tone-yellow">
+                <PencilRuler size={28} aria-hidden="true" />
+              </span>
+              <span className="big-action-text">
+                <strong>사진 없이 짜기</strong>
+                <span>평면도에 직접 놓아요</span>
+              </span>
             </button>
           </div>
         )}

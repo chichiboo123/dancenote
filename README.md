@@ -44,6 +44,12 @@
    - **사람 찾기 민감도** 슬라이더로 더 많이 찾을지 / 확실한 것만 찾을지 조절합니다.
    - 평면도의 동그란 이름표는 끌어서 자리를 고칠 수 있습니다.
    - 지난 컷에서 그 근처에 있던 친구를 **"지난 컷 자리"** 로 추천해 줍니다.
+   - 두 번째 컷부터는 **지난 컷처럼 이름 붙이기** 버튼 하나로, 지난 컷에서 가까이 있던 친구 이름을
+     이름 없는 네모에 한꺼번에 붙입니다. (가장 가까운 짝부터 정하고, 너무 멀면 붙이지 않습니다)
+   - 객석이나 무대 옆에 선 사람(선생님 등)은 **무대 밖**으로 보고 빼 둡니다. `무대 밖 n명 보기`로 다시 볼 수 있습니다.
+   - 앞사람에게 다리가 가려진 친구는, 같은 사진 속 다른 친구들의 키를 보고 **발 위치를 짐작**해서
+     평면도에 놓습니다. (사진에는 짐작한 발 위치까지 점선으로 이어서 보여 줍니다)
+   - 사진 오른쪽 아래 **확대 버튼**으로 최대 3배까지 크게 보고, 손가락으로 밀어서 작은 친구를 누를 수 있습니다.
 6. **컷 저장하기** — 저장하면 공연 화면으로 돌아갑니다. 같은 이름은 모든 컷에서 같은 색입니다.
    - 컷 아래의 **이어 만들기**(⧉) 버튼을 누르면 **그 컷의 자리를 그대로 가져온 새 컷**이 생깁니다.
      움직인 친구만 끌어서 옮기면 되니, 동선을 이어 짤 때 가장 빠릅니다.
@@ -80,6 +86,7 @@
 동선노트는 PWA입니다. 홈 화면에 추가하면 앱처럼 열리고, 인터넷이 없어도 동작합니다.
 
 1. 첫 화면의 **오프라인 준비**를 눌러, 사람 찾기 파일(약 30MB)을 미리 받아 둡니다.
+   (글꼴과 아이콘은 앱 안에 들어 있어서 따로 받지 않아도 됩니다)
    (와이파이가 잘 되는 곳에서 한 번만 하면 됩니다)
 2. 홈 화면에 추가합니다.
    - 아이패드 사파리: **공유 → 홈 화면에 추가**
@@ -149,6 +156,7 @@
 | 7 | 오류 수정, 직접 넣기, 무대 번호 표시, 모바일 다듬기 | ✅ 완료 |
 | 8 | 전반 점검 — 안정성·접근성·완성도 다듬기 | ✅ 완료 |
 | 9 | 화면 균형·구조 정리, KRDS 버튼 기준 적용 | ✅ 완료 |
+| 10 | 사람 인식 엔진 업그레이드, 지난 컷처럼 이름 붙이기, 새 디자인 | ✅ 완료 |
 
 ## 화면 크기
 
@@ -186,21 +194,35 @@
 
 ### 글꼴에 대해
 
-본문·제목 모두 **Pretendard GOV**를 기준으로 하고, 없으면 일반 **Pretendard**(jsDelivr CDN),
-그것도 못 받으면 기기 기본 글꼴 순서로 대체됩니다. 학교 방화벽이 CDN을 막아도 글씨는 정상으로 보입니다.
+본문·제목 모두 **Pretendard GOV**(가변 글꼴, `pretendard-gov` 패키지)를 씁니다. 글꼴과 푸터 아이콘
+(Material Icons Outlined, `material-icons` 패키지)을 **앱 안에 담아** 두기 때문에, 학교 방화벽이 CDN을
+막거나 인터넷이 없어도 똑같이 보입니다. 글꼴은 글자 묶음별로 잘게 나뉘어 있어서 화면에 실제로 쓰인
+글자의 조각만 받고, 한 번 받은 조각은 오프라인용으로 담아 둡니다.
 캔버스(평면도·PDF)에서 쓰는 글꼴 이름은 `src/lib/canvasFont.ts` 한 곳에 모아 두었습니다.
 
 ### 사람 인식 파일에 대해
 
 오프라인에서도 인식이 되도록 MediaPipe 파일을 앱 안에 담습니다.
 
-- `public/models/efficientdet_lite0.tflite` (약 7MB) — 저장소에 들어 있습니다.
+- `public/models/efficientdet_lite2.tflite` (EfficientDet-Lite2 int8, 약 7.5MB) — 저장소에 들어 있습니다.
+  예전에 쓰던 Lite0보다 정확도가 높고(MediaPipe 공개 수치로 mAP 약 26 → 34) 파일 크기는 거의 같습니다.
 - `public/models/wasm/` (약 23MB) — 저장소에 넣지 않고, `npm install` 할 때
   `scripts/copy-mediapipe.mjs` 가 `node_modules` 에서 복사해 옵니다.
   SIMD를 지원하는 기기용과 옛 기기용 두 벌을 모두 담아 둡니다.
 
-속도(헤드리스 크롬, GPU 없이 측정): 준비 후 사진 한 장당 약 1초.
-사진을 고르는 동안 미리 준비시켜 두기 때문에 기다리는 느낌이 거의 없습니다.
+무대 사진은 뒷줄 친구들이 아주 작게 찍혀서, 사진을 통째로 한 번만 넣으면 잘 놓칩니다. 그래서
+(`src/lib/detector.ts`)
+
+1. 사진 전체를 한 번 살피고,
+2. 정해 둔 **무대 영역 근처만 잘라 최대 4조각으로 나눠 크게** 한 번씩 더 살핀 뒤,
+3. 겹친 네모를 하나로 합치고(여러 번 찾을수록 확신을 조금 올림), 몸 일부만 잡힌 네모와 조각 경계에서
+   잘린 네모는 버립니다.
+4. 발이 무대 영역 밖이면 무대 밖 사람으로 표시하고, 다리가 가려진 사람은 '발 높이 ↔ 키' 관계를
+   같은 사진의 다른 사람들로 구해서 발 위치를 짐작합니다.
+
+int8 모델은 그래픽 가속(GPU)에서 결과가 비어 버려서 늘 CPU로 돌립니다.
+시험용 무대 사진(10명)에서 예전 방식은 기본 민감도에서 3~4명을 찾았고, 지금은 10명을 모두 찾습니다.
+속도(헤드리스 크롬, GPU 없이 측정): 준비 후 사진 한 장당 약 1.2초. 사진을 고르는 동안 미리 준비시켜 둡니다.
 
 ```bash
 npm install     # 처음 한 번 (MediaPipe wasm도 함께 복사됩니다)
@@ -234,10 +256,10 @@ npm run lint    # 문법 검사
 | jsPDF | 동선표 PDF 만들기 | MIT | https://github.com/parallax/jsPDF |
 | vite-plugin-pwa · Workbox | 홈 화면 설치·오프라인 | MIT | https://vite-pwa-org.netlify.app |
 | MediaPipe Tasks Vision | 사람(형태) 인식 | Apache-2.0 | https://ai.google.dev/edge/mediapipe |
-| EfficientDet-Lite0 (.tflite) | 사람 인식 모델 | Apache-2.0 | https://ai.google.dev/edge/mediapipe/solutions/vision/object_detector |
+| EfficientDet-Lite2 (.tflite) | 사람 인식 모델 | Apache-2.0 | https://ai.google.dev/edge/mediapipe/solutions/vision/object_detector |
 | oxlint | 문법 검사 | MIT | https://oxc.rs |
-| Pretendard | 글꼴 (Pretendard GOV 대체용 CDN) | SIL Open Font License 1.1 | https://github.com/orioncactus/pretendard |
-| Material Icons Outlined | 푸터 아이콘 | Apache-2.0 | https://fonts.google.com/icons |
+| Pretendard GOV | 글꼴 (앱 안에 포함) | SIL Open Font License 1.1 | https://github.com/orioncactus/pretendard |
+| Material Icons Outlined (`material-icons`) | 푸터 아이콘 (앱 안에 포함) | Apache-2.0 | https://fonts.google.com/icons |
 
 
 
