@@ -226,7 +226,7 @@ int8 모델은 그래픽 가속(GPU)에서 결과가 비어 버려서 늘 CPU로
 
 ```bash
 npm install     # 처음 한 번 (MediaPipe wasm도 함께 복사됩니다)
-npm run dev     # 개발 서버 (http://localhost:5173/dancenote/)
+npm run dev     # 개발 서버 (http://localhost:5173/)
 npm run build   # 배포용 빌드
 npm run preview # 빌드 결과 확인
 npm run lint    # 문법 검사
@@ -238,7 +238,8 @@ npm run lint    # 문법 검사
 (`.github/workflows/deploy.yml`).
 처음 한 번은 저장소 **Settings → Pages → Source** 를 **GitHub Actions** 로 바꿔 주세요.
 
-다른 경로에 올릴 때는 `VITE_BASE` 환경변수로 base 경로를 바꿀 수 있습니다.
+커스텀 도메인 `dancenote.chichiboo.link` 의 루트(`/`)에 배포합니다. `public/CNAME` 에 도메인이 적혀 있습니다.
+하위 경로(예: `https://<user>.github.io/dancenote/`)에 올릴 때는 `VITE_BASE=/dancenote/` 처럼 base 경로를 바꿔 주세요.
 
 ## 사용한 오픈소스
 
