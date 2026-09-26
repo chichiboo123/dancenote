@@ -20,7 +20,14 @@ import PdfExportButton from '../components/PdfExportButton'
 import { db } from '../db/db'
 import { textColorOn } from '../lib/colors'
 import { downloadDataUrl, safeFileName } from '../lib/backup'
-import { SPEED_LABELS, SPEED_SECONDS, useViewPrefs, type PlaySpeed } from '../store/viewPrefs'
+import MarkSizePicker from '../components/MarkSizePicker'
+import {
+  MARK_SIZE_SCALE,
+  SPEED_LABELS,
+  SPEED_SECONDS,
+  useViewPrefs,
+  type PlaySpeed,
+} from '../store/viewPrefs'
 import type { Cut, Student } from '../db/types'
 
 /** 0 ~ 마지막 컷 사이로 맞춘다. NaN이 들어와도 0이 된다. */
@@ -165,6 +172,7 @@ export default function PlayPage() {
         y,
         color: student.color,
         label: student.shortName,
+        emoji: student.emoji,
         opacity,
         faded: Boolean(focusId) && focusId !== studentId,
       })
@@ -277,6 +285,7 @@ export default function PlayPage() {
               <StagePlan
                 stageWidthM={project.stageWidthM}
                 stageDepthM={project.stageDepthM}
+                markScale={MARK_SIZE_SCALE[prefs.markSize]}
                 marks={marks}
                 trails={trails}
                 showGrid={prefs.showGrid}
@@ -347,6 +356,8 @@ export default function PlayPage() {
                     </button>
                   ))}
                 </div>
+
+                <MarkSizePicker />
 
                 <p className="side-label">보기</p>
                 <div className="toolbar">

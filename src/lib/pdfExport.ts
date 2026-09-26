@@ -178,7 +178,7 @@ function drawCutCard(
   const icons: PlanIcon[] = cut.placements.flatMap((p) => {
     const student = studentById[p.studentId]
     if (!student) return []
-    return [{ x: p.x, y: p.y, color: student.color, label: student.shortName }]
+    return [{ x: p.x, y: p.y, color: student.color, label: student.shortName, emoji: student.emoji }]
   })
 
   const trails: PlanTrail[] = options.showTrails && previous

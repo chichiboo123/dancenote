@@ -16,6 +16,21 @@ export const SPEED_LABELS: Record<PlaySpeed, string> = {
   fast: '빠르게',
 }
 
+/** 평면도 이름표 크기 */
+export type MarkSize = 'small' | 'normal' | 'large'
+
+export const MARK_SIZE_SCALE: Record<MarkSize, number> = {
+  small: 0.75,
+  normal: 1,
+  large: 1.3,
+}
+
+export const MARK_SIZE_LABELS: Record<MarkSize, string> = {
+  small: '작게',
+  normal: '보통',
+  large: '크게',
+}
+
 interface ViewPrefs {
   /** 무대 9구역 점선 보기 */
   showGrid: boolean
@@ -29,6 +44,8 @@ interface ViewPrefs {
   /** 이전 컷 자리 보기 */
   showGhosts: boolean
   speed: PlaySpeed
+  /** 이름표 크기 */
+  markSize: MarkSize
   set: (patch: Partial<Omit<ViewPrefs, 'set'>>) => void
 }
 
@@ -50,14 +67,15 @@ export const useViewPrefs = create<ViewPrefs>((set, get) => ({
   showTrails: true,
   showGhosts: true,
   speed: 'normal',
+  markSize: 'normal',
   ...load(),
   set: (patch) => {
     set(patch)
     try {
-      const { showGrid, flipped, showTrails, showGhosts, speed } = get()
+      const { showGrid, flipped, showTrails, showGhosts, speed, markSize } = get()
       localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ showGrid, flipped, showTrails, showGhosts, speed }),
+        JSON.stringify({ showGrid, flipped, showTrails, showGhosts, speed, markSize }),
       )
     } catch {
       // 저장이 안 돼도 이번 사용 중에는 그대로 적용된다.

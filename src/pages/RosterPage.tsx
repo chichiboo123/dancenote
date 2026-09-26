@@ -122,6 +122,7 @@ export default function RosterPage() {
           shortName: before.shortName,
           role: before.role,
           color: before.color,
+          emoji: before.emoji,
         })
       },
     })
@@ -307,6 +308,24 @@ export default function RosterPage() {
 }
 
 /** 학생 한 명 고치기 (이름 · 배역 · 색) */
+/** 이름표 모양으로 고를 수 있는 이모지 (배역·동물·자연) */
+const EMOJI_CHOICES = [
+  '🐶', '🐱', '🐰', '🦊', '🐻', '🐼', '🐯', '🦁', '🐸', '🐵', '🐧', '🐤',
+  '🦄', '🐝', '🦋', '🐢', '🌸', '🌻', '🌳', '🍄', '⭐', '🌙', '☀️', '🌈',
+  '👑', '🎭', '🧚', '🤴', '👸', '🧙', '🤖', '👻', '🎵', '🍎', '🥕', '🥔',
+]
+
+/** 적은 글자에서 맨 앞 그림 글자 하나만 쓴다. (이모지는 여러 글자로 이뤄진 것도 있어 Segmenter로 자른다) */
+function firstGrapheme(text: string): string {
+  const t = text.trim()
+  if (!t) return ''
+  const Seg = (Intl as { Segmenter?: typeof Intl.Segmenter }).Segmenter
+  if (Seg) {
+    for (const { segment } of new Seg('ko', { granularity: 'grapheme' }).segment(t)) return segment
+  }
+  return Array.from(t)[0] ?? ''
+}
+
 function StudentEditor({
   student,
   othersShortNames,
@@ -323,6 +342,7 @@ function StudentEditor({
   const [name, setName] = useState(student.name)
   const [role, setRole] = useState(student.role ?? '')
   const [color, setColor] = useState(student.color)
+  const [emoji, setEmoji] = useState(student.emoji ?? '')
 
   const shortName = makeShortName(name, othersShortNames)
 
@@ -334,8 +354,13 @@ function StudentEditor({
           style={{ background: color, color: textColorOn(color) }}
           aria-hidden="true"
         >
-          {shortName}
+          {emoji || shortName}
         </span>
+        {emoji && (
+          <span className="emoji-name" style={{ background: color, color: textColorOn(color) }}>
+            {shortName}
+          </span>
+        )}
         <span className="hint">평면도에는 이렇게 보여요</span>
       </div>
 
@@ -380,6 +405,40 @@ function StudentEditor({
         </div>
       </div>
 
+      <div className="field">
+        <span className="field-label">모양 고르기 (안 골라도 돼요)</span>
+        <div className="emoji-grid" role="group" aria-label="이름표 모양 고르기">
+          <button
+            type="button"
+            className={`emoji-dot emoji-none${emoji === '' ? ' is-on' : ''}`}
+            onClick={() => setEmoji('')}
+            aria-pressed={emoji === ''}
+          >
+            이름
+          </button>
+          {EMOJI_CHOICES.map((e) => (
+            <button
+              key={e}
+              type="button"
+              className={`emoji-dot${emoji === e ? ' is-on' : ''}`}
+              onClick={() => setEmoji(e)}
+              aria-pressed={emoji === e}
+              aria-label={`${e} 모양`}
+            >
+              {e}
+            </button>
+          ))}
+        </div>
+        <input
+          className="input emoji-input"
+          value={EMOJI_CHOICES.includes(emoji) ? '' : emoji}
+          onChange={(e) => setEmoji(firstGrapheme(e.target.value))}
+          placeholder="다른 이모지를 직접 넣어도 돼요 (예: 🦖)"
+          aria-label="이모지 직접 넣기"
+          autoComplete="off"
+        />
+      </div>
+
       <div className="editor-actions">
         <button type="button" className="btn btn-danger" onClick={onDelete}>
           <Trash2 size={22} aria-hidden="true" />
@@ -394,6 +453,7 @@ function StudentEditor({
               shortName,
               role: role.trim() || undefined,
               color,
+              emoji: emoji || undefined,
             })
           }
         >

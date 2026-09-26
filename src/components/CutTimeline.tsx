@@ -300,7 +300,7 @@ function PlanThumb({
       colors,
       icons: cut.placements.flatMap((p) => {
         const s = byId.get(p.studentId)
-        return s ? [{ x: p.x, y: p.y, color: s.color, label: s.shortName }] : []
+        return s ? [{ x: p.x, y: p.y, color: s.color, label: s.shortName, emoji: s.emoji }] : []
       }),
       showGrid: false,
       labels: false,

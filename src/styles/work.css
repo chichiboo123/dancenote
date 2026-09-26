@@ -286,6 +286,20 @@
   display: block;
 }
 
+/* 이름표 크기 고르기 */
+.mark-size {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+}
+
+.mark-size-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--c-ink-soft);
+}
+
 /* 평면도에서 골라 둔 친구 안내 (고른 동안에만 보인다) */
 .select-bar {
   display: flex;

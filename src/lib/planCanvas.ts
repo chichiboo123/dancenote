@@ -1,7 +1,7 @@
 import { CANVAS_FONT } from './canvasFont'
 import type { PlanColors } from './planColors'
 import { textColorOn } from './colors'
-import { frontStageMarks } from './stageMarks'
+import { frontStageMarks, sideStageMarks } from './stageMarks'
 
 /**
  * 무대 평면도를 그냥 캔버스(2D)에 그린다.
@@ -15,6 +15,8 @@ export interface PlanIcon {
   y: number
   color: string
   label: string
+  /** 이모지 모양 이름표 */
+  emoji?: string
 }
 
 export interface PlanTrail {
@@ -144,6 +146,24 @@ export function drawStagePlan(ctx: CanvasRenderingContext2D, options: DrawPlanOp
       ctx.textBaseline = flipped ? 'bottom' : 'top'
       ctx.fillText(mark.label, vx, edgeY + dir * (tickLen + 4) * (flipped ? 1 : 0) + (flipped ? -4 : 5))
     }
+
+    // 무대 옆(왼쪽 가장자리) 앞뒤 번호: 무대 앞이 0
+    ctx.font = `${markFont}px ${CANVAS_FONT}`
+    ctx.fillStyle = colors.label
+    ctx.textBaseline = 'middle'
+    ctx.textAlign = flipped ? 'left' : 'right'
+    for (const mark of sideStageMarks()) {
+      const v = toView(0, mark.y)
+      const tick = flipped ? -h * 0.03 : h * 0.03
+      ctx.beginPath()
+      ctx.moveTo(v.x + tick, v.y)
+      ctx.lineTo(v.x - (flipped ? -3 : 3), v.y)
+      ctx.strokeStyle = colors.tape
+      ctx.lineWidth = 2
+      ctx.stroke()
+      ctx.fillText(mark.label, v.x + (flipped ? 6 : -6), v.y)
+    }
+    ctx.textAlign = 'center'
   }
 
   // 위·아래 라벨
@@ -168,11 +188,25 @@ export function drawStagePlan(ctx: CanvasRenderingContext2D, options: DrawPlanOp
     ctx.strokeStyle = '#ffffff'
     ctx.stroke()
 
-    ctx.fillStyle = textColorOn(icon.color)
-    ctx.font = `700 ${Math.round(r * 0.72)}px ${CANVAS_FONT}`
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
-    ctx.fillText(icon.label, v.x, v.y + r * 0.04)
+    if (icon.emoji) {
+      // 이모지는 동그라미 안에, 짧은 이름은 아래에 작은 띠로
+      ctx.font = `${Math.round(r * 1.1)}px ${CANVAS_FONT}`
+      ctx.fillText(icon.emoji, v.x, v.y + r * 0.06)
+      const fs = Math.max(8, Math.round(r * 0.5))
+      ctx.font = `700 ${fs}px ${CANVAS_FONT}`
+      const tw = ctx.measureText(icon.label).width + 6
+      roundRect(ctx, v.x - tw / 2, v.y + r - 2, tw, fs + 4, 5)
+      ctx.fillStyle = icon.color
+      ctx.fill()
+      ctx.fillStyle = textColorOn(icon.color)
+      ctx.fillText(icon.label, v.x, v.y + r - 2 + (fs + 4) / 2)
+    } else {
+      ctx.fillStyle = textColorOn(icon.color)
+      ctx.font = `700 ${Math.round(r * 0.72)}px ${CANVAS_FONT}`
+      ctx.fillText(icon.label, v.x, v.y + r * 0.04)
+    }
   }
 }
 
