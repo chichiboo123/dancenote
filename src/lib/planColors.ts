@@ -14,6 +14,10 @@ export interface PlanColors {
   label: string
   /** 센터(0번) 표시 색 */
   centerMark: string
+  /** 고른 이름표 바깥 테두리 */
+  select: string
+  /** 끄는 동안 잠깐 나타나는 맞춤선 */
+  guide: string
 }
 
 const LIGHT: PlanColors = {
@@ -24,6 +28,8 @@ const LIGHT: PlanColors = {
   border: '#B38A58',
   label: '#5B6272',
   centerMark: '#D32F2F',
+  select: '#006DD2',
+  guide: '#D6338A',
 }
 
 const DARK: PlanColors = {
@@ -34,6 +40,8 @@ const DARK: PlanColors = {
   border: '#5D6B8C',
   label: '#A9B2C4',
   centerMark: '#FF7A70',
+  select: '#6FB2FF',
+  guide: '#FF6FB5',
 }
 
 export function usePlanColors(): PlanColors {

@@ -458,8 +458,21 @@
 
 .preset-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: var(--sp-2);
+}
+
+/* 좁은 화면에서는 2칸씩 두 줄로 */
+@media (max-width: 520px) {
+  .preset-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.preset-custom-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .preset-row .btn {
@@ -484,6 +497,20 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--sp-3);
+}
+
+.size-row-hint {
+  grid-column: 1 / -1;
+  font-size: 14px;
+}
+
+.size-row-hint.is-error {
+  color: var(--c-danger);
+  font-weight: 600;
+}
+
+.size-row .input[aria-invalid='true'] {
+  border-color: var(--c-danger);
 }
 
 .switch-row {
