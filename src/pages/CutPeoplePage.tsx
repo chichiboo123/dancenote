@@ -40,7 +40,8 @@ import { describePosition } from "../lib/stageMarks";
 import { useAutoSave } from "../lib/useAutoSave";
 import { downloadDataUrl, safeFileName } from "../lib/backup";
 import { josa } from "../lib/names";
-import { useViewPrefs } from "../store/viewPrefs";
+import { MARK_SIZE_SCALE, useViewPrefs } from "../store/viewPrefs";
+import MarkSizePicker from "../components/MarkSizePicker";
 import { cutPath, useGoBack } from "../lib/navigation";
 import type { Point, Student } from "../db/types";
 
@@ -652,6 +653,7 @@ export default function CutPeoplePage() {
       y: s.stage.y,
       color: student?.color ?? "#9AA3B5",
       label: student?.shortName ?? "?",
+      emoji: student?.emoji,
     };
   });
 
@@ -1062,6 +1064,15 @@ export default function CutPeoplePage() {
             <StagePlan
               stageWidthM={project.stageWidthM}
               stageDepthM={project.stageDepthM}
+              markScale={MARK_SIZE_SCALE[prefs.markSize]}
+              onMarqueeSelect={(keys, additive) => {
+                // 빈 바닥에서 끌어 네모 안의 친구들을 한꺼번에 고른다.
+                if (additive || multiPick) {
+                  select([...new Set([...selectedKeys, ...keys])]);
+                } else {
+                  select(keys);
+                }
+              }}
               marks={planMarks}
               ghosts={ghosts}
               showGrid={prefs.showGrid}
@@ -1118,6 +1129,7 @@ export default function CutPeoplePage() {
                 그림으로 저장
               </button>
             </div>
+            <MarkSizePicker />
             {selectedKeys.length > 0 ? (
               <div className="select-bar" role="status">
                 <span className="select-bar-text">
@@ -1164,10 +1176,11 @@ export default function CutPeoplePage() {
               </div>
             ) : (
               <p className="hint">
-                이름표를 끌면 다른 친구나 무대 가운데에 줄이 맞춰져요. 이름표를
-                누르고 <strong>여러 명 고르기</strong>를 켜면 여러 명을 함께
-                옮겨요. (PC는 Ctrl·⌘ 누르고 클릭) 빈 곳을 길게 누르면 친구를
-                직접 넣어요.
+                이름표를 끌면 다른 친구, 무대 가운데, 무대 앞·옆 번호에 줄이
+                맞춰져요. 빈 바닥에서 <strong>끌어 네모를 그리면</strong> 그
+                안의 친구들을 한꺼번에 골라 함께 옮겨요. (하나씩 더하려면 이름표를
+                누르고 여러 명 고르기, PC는 Ctrl·⌘ + 클릭) 빈 곳을 길게 누르면
+                친구를 직접 넣어요.
               </p>
             )}
           </section>
