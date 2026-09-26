@@ -6,7 +6,13 @@
  * 화면 방향과 상관없이 같은 결과가 나온다.
  * 붙는 거리(문턱)만 화면 픽셀로 정해서 무대 크기와 상관없이 손에 느껴지는 정도가 같게 한다.
  */
-import { MARK_SPACING, HALF_STEP, markSnapPoints } from './stageMarks'
+import {
+  DEPTH_SPACING,
+  HALF_STEP,
+  MARK_SPACING,
+  depthSnapPoints,
+  markSnapPoints,
+} from './stageMarks'
 
 export interface SnapTarget {
   id: string
@@ -21,7 +27,10 @@ export type XGuide =
   | { kind: 'step'; value: number; k: number }
 
 /** 가로 맞춤선(같은 y) 한 개 */
-export type YGuide = { kind: 'mark'; value: number; targetId: string } | { kind: 'center'; value: number }
+export type YGuide =
+  | { kind: 'mark'; value: number; targetId: string }
+  | { kind: 'center'; value: number }
+  | { kind: 'step'; value: number; k: number }
 
 export interface SnapResult {
   x: number
@@ -67,7 +76,7 @@ function nearestMark(
 /**
  * 끌고 있는 자리 하나(raw)를 가까운 기준에 붙인다.
  *
- * 우선순위: ① 다른 친구와 같은 줄 ② 무대 가운데(0.5) ③ 무대 앞 번호의 반 칸 자리(x만).
+ * 우선순위: ① 다른 친구와 같은 줄 ② 무대 가운데(0.5) ③ 무대 앞·옆 번호의 반 칸 자리.
  * 문턱 안에 들어온 것만 붙으므로 멀리 있는 자리로 갑자기 튀지 않는다.
  */
 export function snapPoint(raw: { x: number; y: number }, targets: SnapTarget[], opts: SnapOptions): SnapResult {
@@ -77,6 +86,8 @@ export function snapPoint(raw: { x: number; y: number }, targets: SnapTarget[], 
   // 번호 자리는 촘촘하므로 조금 더 좁게 붙는다. (반 칸 간격의 30%, 최대 6px)
   const halfStepPx = MARK_SPACING * HALF_STEP * opts.floorW
   const thrStep = opts.floorW > 0 ? Math.min(snapPx * 0.6, halfStepPx * 0.3) / opts.floorW : 0
+  const halfDepthPx = DEPTH_SPACING * HALF_STEP * opts.floorH
+  const thrStepY = opts.floorH > 0 ? Math.min(snapPx * 0.6, halfDepthPx * 0.3) / opts.floorH : 0
 
   const result: SnapResult = { x: raw.x, y: raw.y }
 
@@ -108,6 +119,17 @@ export function snapPoint(raw: { x: number; y: number }, targets: SnapTarget[], 
   } else if (Math.abs(raw.y - 0.5) <= thrY) {
     result.y = 0.5
     result.yGuide = { kind: 'center', value: 0.5 }
+  } else {
+    // 무대 옆 앞뒤 번호의 반 칸 자리
+    let best: { y: number; k: number; d: number } | undefined
+    for (const p of depthSnapPoints()) {
+      const d = Math.abs(p.y - raw.y)
+      if (d <= thrStepY && (!best || d < best.d)) best = { ...p, d }
+    }
+    if (best) {
+      result.y = best.y
+      result.yGuide = { kind: 'step', value: best.y, k: best.k }
+    }
   }
 
   return result

@@ -67,6 +67,37 @@ export function describeMarkStep(k: number): string {
   return `${k < 0 ? '왼' : '오'} ${Math.abs(k)}`
 }
 
+/**
+ * 무대 옆 가장자리에 붙이는 앞뒤 번호.
+ * 무대 앞(객석 쪽)이 0, 무대 뒤로 갈수록 커진다. (0 1 2 3 4)
+ */
+export const DEPTH_STEPS = 4
+
+/** 앞에서 k칸 들어간 자리의 무대 y좌표(0~1, 0이 무대 뒤). k는 0.5처럼 반 칸도 된다. */
+export function markY(k: number): number {
+  return 1 - k / DEPTH_STEPS
+}
+
+/** 옆 가장자리 표시 목록 (무대 앞부터) */
+export function sideStageMarks(): { y: number; label: string; front: boolean }[] {
+  const marks = []
+  for (let k = 0; k <= DEPTH_STEPS; k++) marks.push({ y: markY(k), label: String(k), front: k === 0 })
+  return marks
+}
+
+/** 끌 때 붙는 앞뒤 자리 (반 칸 간격, 화면에는 번호만 보인다) */
+export function depthSnapPoints(): { y: number; k: number }[] {
+  const points: { y: number; k: number }[] = []
+  for (let i = 0; i <= DEPTH_STEPS / HALF_STEP; i++) {
+    const k = i * HALF_STEP
+    points.push({ y: markY(k), k })
+  }
+  return points
+}
+
+/** 앞뒤 번호 한 칸이 무대 세로에서 차지하는 비율(0~1) */
+export const DEPTH_SPACING = markY(0) - markY(1)
+
 /** 무대 좌표(0~1)를 가장 가까운 센터 기준 번호로 바꾼다. (예: "센터", "왼 2", "오 3") */
 export function describePosition(x: number): string {
   const k = Math.round((x - 0.5) * 2 * MARK_STEPS)

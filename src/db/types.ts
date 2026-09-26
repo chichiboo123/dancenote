@@ -40,6 +40,8 @@ export interface Student {
   role?: string
   /** 아이콘 색 (#rrggbb) */
   color: string
+  /** 이름표 모양으로 쓸 이모지 (없으면 짧은 이름을 쓴다) */
+  emoji?: string
   /** 명단에서의 순서 */
   order: number
 }

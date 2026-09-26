@@ -5,7 +5,12 @@ import type Konva from 'konva'
 import { useElementSize } from '../lib/useElementSize'
 import { textColorOn } from '../lib/colors'
 import { usePlanColors } from '../lib/planColors'
-import { describeMarkStep, describePosition, frontStageMarks } from '../lib/stageMarks'
+import {
+  describeMarkStep,
+  describePosition,
+  frontStageMarks,
+  sideStageMarks,
+} from '../lib/stageMarks'
 import {
   clampGroupDelta,
   formatMeters,
@@ -23,6 +28,8 @@ export interface Mark {
   color: string
   /** 아이콘 안에 쓰는 짧은 이름 */
   label: string
+  /** 이모지 모양 이름표 (있으면 동그라미 안에 이모지, 아래에 짧은 이름) */
+  emoji?: string
   /** 흐리게 보일지 (다른 학생 따라가기 등) */
   faded?: boolean
   /** 0~1. 컷 사이에서 나타나거나 사라질 때 쓴다. */
@@ -88,6 +95,10 @@ interface Props {
   onTapEmpty?: (x: number, y: number) => void
   /** 그림 파일로 저장할 때 쓰려고 캔버스를 밖으로 넘겨 준다. */
   stageRef?: React.RefObject<Konva.Stage | null>
+  /** 이름표 크기 배율 (1이 보통) */
+  markScale?: number
+  /** 빈 바닥에서 끌어 네모를 그리면 그 안의 이름표들을 넘겨 준다. (두 번째 값: Ctrl·⌘을 눌렀는지) */
+  onMarqueeSelect?: (ids: string[], additive: boolean) => void
   /** 평면도 최대 높이(px). 없으면 화면 높이의 62%. */
   maxHeight?: number
 }
@@ -120,11 +131,11 @@ const PILL_PAD = 4
 let measureCtx: CanvasRenderingContext2D | null = null
 
 /** 알약 글자의 너비(px). 가운데 맞추기에 쓴다. */
-function pillWidth(text: string): number {
+function pillWidth(text: string, fontSize = PILL_FONT, pad = PILL_PAD): number {
   measureCtx ??= document.createElement('canvas').getContext('2d')
-  if (!measureCtx) return text.length * PILL_FONT + PILL_PAD * 2
-  measureCtx.font = `bold ${PILL_FONT}px ${CANVAS_FONT}`
-  return measureCtx.measureText(text).width + PILL_PAD * 2
+  if (!measureCtx) return text.length * fontSize + pad * 2
+  measureCtx.font = `bold ${fontSize}px ${CANVAS_FONT}`
+  return measureCtx.measureText(text).width + pad * 2
 }
 
 /** 끄는 동안 기억해 두는 것 (저장하지 않는 화면 상태) */
@@ -167,6 +178,8 @@ export default function StagePlan({
   onTapEmpty,
   stageRef,
   maxHeight,
+  markScale = 1,
+  onMarqueeSelect,
 }: Props) {
   const { ref, width } = useElementSize<HTMLDivElement>()
   const colors = usePlanColors()
@@ -224,7 +237,13 @@ export default function StagePlan({
     return lines
   }, [floorH])
 
-  const iconR = Math.max(16, Math.min(28, floorW / 18))
+  const iconR = Math.max(16, Math.min(28, floorW / 18)) * markScale
+
+  // 빈 바닥에서 끌어 여러 명 고르기 (화면 px)
+  const marqueeStart = useRef<{ x: number; y: number; additive: boolean } | null>(null)
+  const [marquee, setMarquee] = useState<{ x: number; y: number; w: number; h: number } | null>(
+    null,
+  )
 
   /**
    * 이름표가 거의 같은 자리에 겹치면 글자를 읽을 수 없으므로, 화면에서만 살짝 벌려 보여 준다.
@@ -449,6 +468,17 @@ export default function StagePlan({
             <Line key="gy" points={[left, vy, right, vy]} stroke={stroke} strokeWidth={1.5} />,
           )
         }
+      } else if (g.yGuide.kind === 'step') {
+        // 앞뒤 번호 자리: 이름표에서 무대 옆 번호 줄까지 잇는다.
+        nodes.push(
+          <Line
+            key="gy"
+            points={[a.x, vy, toView(0, g.yGuide.value).x, vy]}
+            stroke={stroke}
+            strokeWidth={1.5}
+            dash={[4, 4]}
+          />,
+        )
       } else {
         nodes.push(
           <Line
@@ -495,6 +525,7 @@ export default function StagePlan({
     // 무대 가운데·번호 자리에 붙었으면 이름표 위에 짧게 알려 준다.
     const words: string[] = []
     if (g.xGuide?.kind === 'step') words.push(describeMarkStep(g.xGuide.k))
+    if (g.yGuide?.kind === 'step') words.push(g.yGuide.k === 0 ? '무대 앞 끝' : `앞에서 ${g.yGuide.k}`)
     if (g.xGuide?.kind === 'center' && g.yGuide?.kind === 'center') words.push('무대 한가운데')
     else if (g.xGuide?.kind === 'center' || g.yGuide?.kind === 'center') words.push('무대 가운데')
     if (words.length > 0) {
@@ -522,9 +553,37 @@ export default function StagePlan({
           onPointerDown={(e) => {
             longPressFired.current = false
             draggedRef.current = false
-            if (e.target === e.target.getStage()) startLongPress(e.target.getStage()!)
+            if (e.target === e.target.getStage()) {
+              startLongPress(e.target.getStage()!)
+              const pos = e.target.getStage()!.getPointerPosition()
+              if (onMarqueeSelect && pos) {
+                marqueeStart.current = { x: pos.x, y: pos.y, additive: isAdditive(e.evt) }
+              }
+            }
           }}
           onPointerUp={(e) => {
+            const start = marqueeStart.current
+            marqueeStart.current = null
+            if (marquee && start) {
+              // 네모 안에 중심이 들어온 이름표를 고른다. (화면에 보이는 자리 기준)
+              const ids = marks
+                .filter((m) => (m.opacity ?? 1) > 0)
+                .filter((m) => {
+                  const v = viewPos[m.id] ?? toView(m.x, m.y)
+                  return (
+                    v.x >= marquee.x &&
+                    v.x <= marquee.x + marquee.w &&
+                    v.y >= marquee.y &&
+                    v.y <= marquee.y + marquee.h
+                  )
+                })
+                .map((m) => m.id)
+              setMarquee(null)
+              draggedRef.current = false
+              cancelLongPress()
+              onMarqueeSelect?.(ids, start.additive)
+              return
+            }
             const handled = longPressFired.current || draggedRef.current
             draggedRef.current = false
             cancelLongPress()
@@ -537,8 +596,25 @@ export default function StagePlan({
               }
             }
           }}
-          onPointerMove={cancelLongPress}
-          onPointerLeave={cancelLongPress}
+          onPointerMove={(e) => {
+            cancelLongPress()
+            const start = marqueeStart.current
+            const pos = e.target.getStage()?.getPointerPosition()
+            if (!start || !pos) return
+            // 조금 움직인 것은 '누르기'로 두고, 6px 넘게 끌면 네모를 그린다.
+            if (!marquee && Math.hypot(pos.x - start.x, pos.y - start.y) < 6) return
+            setMarquee({
+              x: Math.min(start.x, pos.x),
+              y: Math.min(start.y, pos.y),
+              w: Math.abs(pos.x - start.x),
+              h: Math.abs(pos.y - start.y),
+            })
+          }}
+          onPointerLeave={() => {
+            cancelLongPress()
+            marqueeStart.current = null
+            setMarquee(null)
+          }}
         >
           <Layer listening={false} key={fontReady ? 'bg-f' : 'bg'}>
             {/* 그림으로 저장할 때 바탕이 비지 않도록 */}
@@ -629,6 +705,34 @@ export default function StagePlan({
                       fontFamily={CANVAS_FONT}
                       fontStyle={mark.center ? 'bold' : 'normal'}
                       fill={mark.center ? colors.centerMark : colors.label}
+                    />
+                  </Group>
+                )
+              })}
+
+            {/* 무대 옆(왼쪽 가장자리) 앞뒤 번호: 무대 앞이 0 */}
+            {showMarks &&
+              sideStageMarks().map((mark) => {
+                const v = toView(0, mark.y)
+                // 반대쪽에서 볼 때는 무대 왼쪽 가장자리가 화면 오른쪽이 된다.
+                const dir = flipped ? -1 : 1
+                return (
+                  <Group key={`sm${mark.y}`}>
+                    <Line
+                      points={[v.x + dir * 10, v.y, v.x - dir * 3, v.y]}
+                      stroke={colors.tape}
+                      strokeWidth={2.5}
+                      lineCap="round"
+                    />
+                    <Text
+                      text={mark.label}
+                      x={flipped ? v.x + 6 : v.x - 26}
+                      y={v.y - 7}
+                      width={20}
+                      align={flipped ? 'left' : 'right'}
+                      fontSize={13}
+                      fontFamily={CANVAS_FONT}
+                      fill={colors.label}
                     />
                   </Group>
                 )
@@ -764,7 +868,38 @@ export default function StagePlan({
                     />
                   )}
                   <Circle radius={iconR} fill={m.color} stroke="#ffffff" strokeWidth={4} />
+                  {m.emoji && (
+                    <>
+                      <Text
+                        text={m.emoji}
+                        fontSize={iconR * 1.15}
+                        width={iconR * 4}
+                        height={iconR * 4}
+                        offsetX={iconR * 2}
+                        offsetY={iconR * 2 - iconR * 0.06}
+                        align="center"
+                        verticalAlign="middle"
+                        listening={false}
+                      />
+                      <Label
+                        x={-pillWidth(m.label, Math.max(10, iconR * 0.46), 2) / 2}
+                        y={iconR - 2}
+                        listening={false}
+                      >
+                        <Tag fill={m.color} cornerRadius={7} stroke="#ffffff" strokeWidth={1.5} />
+                        <Text
+                          text={m.label}
+                          fontSize={Math.max(10, iconR * 0.46)}
+                          fontFamily={CANVAS_FONT}
+                          fontStyle="bold"
+                          fill={textColorOn(m.color)}
+                          padding={2}
+                        />
+                      </Label>
+                    </>
+                  )}
                   <Text
+                    visible={!m.emoji}
                     text={m.label}
                     fontSize={Math.max(11, iconR * 0.66)}
                     fontFamily={CANVAS_FONT}
@@ -782,6 +917,32 @@ export default function StagePlan({
               )
             })}
           </Layer>
+
+          {/* 끌어서 여러 명 고르는 네모 */}
+          {marquee && (
+            <Layer listening={false}>
+              <Rect
+                x={marquee.x}
+                y={marquee.y}
+                width={marquee.w}
+                height={marquee.h}
+                stroke={colors.select}
+                strokeWidth={1.5}
+                dash={[5, 4]}
+                fill={colors.select}
+                opacity={0.9}
+                fillEnabled={false}
+              />
+              <Rect
+                x={marquee.x}
+                y={marquee.y}
+                width={marquee.w}
+                height={marquee.h}
+                fill={colors.select}
+                opacity={0.12}
+              />
+            </Layer>
+          )}
 
           {/* 맞춤선 글자(거리·자리 이름)는 이름표에 가리지 않게 맨 위에 */}
           {guides && <Layer listening={false}>{renderGuideLabels(guides)}</Layer>}

@@ -704,6 +704,46 @@
   font-size: 21px;
 }
 
+.emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  gap: 6px;
+}
+
+.emoji-dot {
+  min-height: 44px;
+  border: 2px solid var(--c-border);
+  border-radius: 12px;
+  background: var(--c-surface);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.emoji-dot.is-on {
+  border-color: var(--c-primary);
+  background: var(--c-primary-soft);
+}
+
+.emoji-none {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--c-ink-soft);
+}
+
+.emoji-input {
+  margin-top: var(--sp-2);
+}
+
+.emoji-name {
+  margin-left: -10px;
+  align-self: flex-end;
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .color-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
