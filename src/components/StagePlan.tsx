@@ -78,6 +78,8 @@ interface Props {
   onMoveStart?: (ids: string[]) => void
   /** 지금 골라 둔 아이콘들. 바깥 테두리로 표시하고, 하나를 끌면 모두 함께 움직인다. */
   selectedIds?: string[]
+  /** 켜면 Ctrl 없이 눌러도 고른 목록에 넣거나 뺀다. (태블릿처럼 키보드가 없을 때) */
+  multiSelect?: boolean
   /** 빈 곳을 길게 눌렀을 때 */
   onLongPressEmpty?: (x: number, y: number) => void
   /** 아이콘을 눌렀을 때. 두 번째 값은 필요한 곳에서만 쓰면 된다. */
@@ -159,6 +161,7 @@ export default function StagePlan({
   onMoveMarks,
   onMoveStart,
   selectedIds,
+  multiSelect = false,
   onLongPressEmpty,
   onSelectMark,
   onTapEmpty,
@@ -273,7 +276,7 @@ export default function StagePlan({
     const selected = (selectedIds ?? []).filter((id) => present.has(id))
     let ids: string[]
     if (selected.includes(m.id)) ids = selected
-    else if (isAdditive(e.evt)) ids = [...selected, m.id]
+    else if (multiSelect || isAdditive(e.evt)) ids = [...selected, m.id]
     else ids = [m.id]
     const orig: DragState['orig'] = {}
     for (const x of marks) if (ids.includes(x.id)) orig[x.id] = { x: x.x, y: x.y }
@@ -735,8 +738,12 @@ export default function StagePlan({
                   y={pos.y}
                   draggable={canDrag}
                   opacity={(m.opacity ?? 1) * (m.faded ? 0.28 : 1)}
-                  onClick={(e) => onSelectMark?.(m.id, { additive: isAdditive(e.evt) })}
-                  onTap={(e) => onSelectMark?.(m.id, { additive: isAdditive(e.evt) })}
+                  onClick={(e) =>
+                    onSelectMark?.(m.id, { additive: multiSelect || isAdditive(e.evt) })
+                  }
+                  onTap={(e) =>
+                    onSelectMark?.(m.id, { additive: multiSelect || isAdditive(e.evt) })
+                  }
                   onPointerDown={(e) => {
                     const p = e.target.getStage()?.getPointerPosition()
                     pressRef.current = p ? { x: p.x, y: p.y } : null

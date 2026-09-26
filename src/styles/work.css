@@ -92,7 +92,8 @@
   min-width: 0;
 }
 
-.pane[data-active='false'] {
+.pane[data-active='false'],
+.pane[hidden] {
   display: none;
 }
 
@@ -104,7 +105,16 @@
     grid-template-columns: 1fr 1fr;
     align-items: start;
   }
-  .pane[data-active='false'] {
+  /* 사진이 없는 컷은 평면도 하나만 넓게 */
+  .work-split.is-single {
+    grid-template-columns: minmax(0, 880px);
+    justify-content: center;
+  }
+  /* 사진 칸과 평면도 칸이 나란히 보일 때 겹치는 버튼은 한 번만 */
+  .btn.hide-wide {
+    display: none;
+  }
+  .pane[data-active='false']:not([hidden]) {
     display: flex;
   }
 }
@@ -289,6 +299,18 @@
 .select-bar-text {
   flex: 1 1 auto;
   min-width: 0;
+}
+
+.select-bar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-left: auto;
+}
+
+.select-bar-actions .btn,
+.save-bar-actions .btn {
+  white-space: nowrap;
 }
 
 .select-bar-text strong {
@@ -694,6 +716,16 @@
   min-width: 200px;
 }
 
+.save-bar-actions {
+  display: flex;
+  gap: var(--sp-2);
+  margin-left: auto;
+}
+
+.save-bar-actions > .btn-primary {
+  min-width: 200px;
+}
+
 .save-bar-status {
   display: flex;
   flex-direction: column;
@@ -770,6 +802,20 @@
   .save-bar-inner > .btn {
     min-width: 0;
     flex: 1;
+  }
+  .save-bar-actions {
+    flex: 1;
+  }
+  .save-bar-actions > .btn-primary {
+    min-width: 0;
+    flex: 1;
+  }
+  .save-bar-actions > .btn-ghost {
+    padding-inline: var(--sp-3);
+  }
+  /* 좁은 화면: 저장 줄 버튼이 두 줄로 꺾이지 않게 아이콘을 뺀다 */
+  .save-bar-actions > .btn-primary svg {
+    display: none;
   }
 }
 

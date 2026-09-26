@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react'
-import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { HashRouter, Navigate, Route, Routes, useParams } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import ChichibooFooter from './components/ChichibooFooter'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -10,12 +10,22 @@ import ProjectFormPage from './pages/ProjectFormPage'
 import ProjectPage from './pages/ProjectPage'
 import RosterPage from './pages/RosterPage'
 import NewCutPage from './pages/NewCutPage'
+import { NavigationTracker } from './lib/navigation'
 
 // 캔버스(Konva)와 영상 화면은 무거워서, 그 화면에 들어갈 때만 불러온다.
 const CutStagePage = lazy(() => import('./pages/CutStagePage'))
 const CutPeoplePage = lazy(() => import('./pages/CutPeoplePage'))
 const PlayPage = lazy(() => import('./pages/PlayPage'))
 const VideoPage = lazy(() => import('./pages/VideoPage'))
+
+/**
+ * 컷이 바뀌면 이름 붙이기 화면을 새로 연다.
+ * ('다음 컷'으로 넘어갈 때 앞 컷의 네모·이름·되돌리기 기록이 섞이지 않게)
+ */
+function CutPeopleRoute() {
+  const { cutId } = useParams()
+  return <CutPeoplePage key={cutId} />
+}
 
 /** 무거운 화면을 불러오는 동안 잠깐 보이는 화면 */
 function Loading() {
@@ -38,6 +48,7 @@ export default function App() {
   return (
     // GitHub Pages에서는 주소에 # 을 쓰는 방식이 가장 안전하다.
     <HashRouter>
+      <NavigationTracker />
       <div className="app-shell">
         <a className="skip-link" href="#main-content">
           바로 본문으로 가기
@@ -64,7 +75,7 @@ export default function App() {
               path="/project/:id/cut/:cutId/people"
               element={
                 <Heavy>
-                  <CutPeoplePage />
+                  <CutPeopleRoute />
                 </Heavy>
               }
             />

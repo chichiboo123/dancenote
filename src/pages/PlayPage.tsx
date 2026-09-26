@@ -263,7 +263,12 @@ export default function PlayPage() {
             <div className="guide-bar" role="status">
               <Route size={24} aria-hidden="true" />
               <span>
-                {currentCut ? `${Math.round(progress) + 1}번 컷 · ${currentCut.title}` : ''}
+                {currentCut
+                  ? // 제목이 기본 이름('컷 3')이면 '3번 컷 · 컷 3'처럼 겹쳐 보이지 않게 번호만 쓴다.
+                    currentCut.title === `컷 ${Math.round(progress) + 1}`
+                    ? `${Math.round(progress) + 1}번 컷`
+                    : `${Math.round(progress) + 1}번 컷 · ${currentCut.title}`
+                  : ''}
                 {currentCut?.memo ? ` — ${currentCut.memo}` : ''}
               </span>
             </div>
@@ -370,7 +375,7 @@ export default function PlayPage() {
                     aria-pressed={prefs.flipped}
                   >
                     <FlipVertical2 size={20} aria-hidden="true" />
-                    {prefs.flipped ? '무대에서 본 모습' : '객석에서 본 모습'}
+                    반대쪽에서 보기
                   </button>
                 </div>
 
@@ -426,6 +431,8 @@ export default function PlayPage() {
             <CutTimeline
               projectId={id}
               cuts={cuts}
+              students={students}
+              stageRatio={project.stageDepthM / project.stageWidthM}
               activeId={currentCut?.id}
               onCreated={(cutId) => navigate(`/project/${id}/cut/${cutId}/people`)}
               onOpen={(cut) => {

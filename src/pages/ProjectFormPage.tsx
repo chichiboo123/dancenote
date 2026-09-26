@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { PencilRuler, Save } from 'lucide-react'
 import AppHeader from '../components/AppHeader'
 import { db } from '../db/db'
+import { useGoBack } from '../lib/navigation'
 import { createProject, updateProject } from '../db/repo'
 
 /** 무대 크기를 손으로 안 재도 되도록 미리 담아 둔 값 */
@@ -34,6 +35,7 @@ function matchPreset(w: number | null, d: number | null) {
 export default function ProjectFormPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const goBack = useGoBack()
   const isEdit = Boolean(id)
 
   const [title, setTitle] = useState('')
@@ -90,7 +92,7 @@ export default function ProjectFormPage() {
         keepPhotos,
       })
       toast.success('공연 정보를 저장했어요.')
-      navigate(`/project/${id}`)
+      goBack(`/project/${id}`)
     } else {
       const newProjectId = await createProject({
         title,
