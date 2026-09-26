@@ -26,6 +26,9 @@ const PRINT_COLORS: PlanColors = {
   border: '#9C7B4C',
   label: '#55607A',
   centerMark: '#C4302A',
+  // 인쇄 그림에는 선택 테두리·맞춤선이 나오지 않지만 모양을 맞춰 둔다.
+  select: '#006DD2',
+  guide: '#D6338A',
 }
 
 export interface PdfOptions {

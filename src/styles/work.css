@@ -276,6 +276,25 @@
   display: block;
 }
 
+/* 평면도에서 골라 둔 친구 안내 (고른 동안에만 보인다) */
+.select-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: 15px;
+  color: var(--c-ink-soft);
+}
+
+.select-bar-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.select-bar-text strong {
+  color: var(--c-primary);
+}
+
 /* --- 컷 타임라인 --- */
 .timeline-wrap {
   margin-top: var(--sp-5);

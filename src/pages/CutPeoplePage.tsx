@@ -23,7 +23,11 @@ import {
 import { toast } from "sonner";
 import AppHeader from "../components/AppHeader";
 import PhotoCanvas from "../components/PhotoCanvas";
-import StagePlan, { type Mark } from "../components/StagePlan";
+import StagePlan, {
+  type Mark,
+  type MarkMove,
+  type SelectOptions,
+} from "../components/StagePlan";
 import NamePickerSheet from "../components/NamePickerSheet";
 import { db } from "../db/db";
 import { addStudents, dropPhotoIfNeeded, updateCut } from "../db/repo";
@@ -151,6 +155,11 @@ export default function CutPeoplePage() {
   const [history, setHistory] = useState<PeopleSnapshot[]>([]);
   // 사진이 없는 컷이면 평면도부터 보여 준다. (한 번 정해지면 사용자가 고른 탭을 따른다)
   const [pickedPane, setPickedPane] = useState<"photo" | "plan" | null>(null);
+  // 평면도에서 골라 둔 이름표들 (저장하지 않는 화면 상태). 다른 컷으로 가면 저절로 비워진다.
+  const [selection, setSelection] = useState<{ cutId: string; keys: string[] }>({
+    cutId,
+    keys: [],
+  });
   const prefs = useViewPrefs();
   const restoredRef = useRef<string | null>(null);
   // 콜백 안에서 최신 값을 읽기 위한 보관함
@@ -365,6 +374,27 @@ export default function CutPeoplePage() {
     [students, placedIds],
   );
 
+  /** 지금 골라 둔 자리 (지워졌거나 다른 컷의 것은 뺀다) */
+  const selectedKeys = useMemo(() => {
+    if (selection.cutId !== cutId) return [];
+    const present = new Set(spots.map((s) => s.key));
+    return selection.keys.filter((k) => present.has(k));
+  }, [selection, cutId, spots]);
+
+  const select = useCallback(
+    (keys: string[]) => setSelection({ cutId, keys }),
+    [cutId],
+  );
+
+  // Esc를 누르면 고른 것을 모두 풀어 준다.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape" && !picking) select([]);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [picking, select]);
+
   const namedCount = placedIds.size;
   const unnamedCount = spots.length - namedCount;
 
@@ -413,6 +443,45 @@ export default function CutPeoplePage() {
       ...prev.slice(-19),
       { label, named, hidden, moved, manual },
     ]);
+  }
+
+  /**
+   * 평면도에서 이름표를 눌렀을 때.
+   * - 그냥 누르기: 그 친구 하나만 고른다. 이미 혼자 골라 둔 친구를 한 번 더 누르면 이름을 바꾼다.
+   *   (이름 없는 자리는 바로 이름 고르기를 연다)
+   * - Ctrl(⌘) 누르고 누르기: 고른 목록에 넣거나 뺀다.
+   */
+  function handleSelectMark(key: string, options?: SelectOptions) {
+    if (options?.additive) {
+      select(
+        selectedKeys.includes(key)
+          ? selectedKeys.filter((k) => k !== key)
+          : [...selectedKeys, key],
+      );
+      return;
+    }
+    const spot = spots.find((s) => s.key === key);
+    const alreadyOnly = selectedKeys.length === 1 && selectedKeys[0] === key;
+    select([key]);
+    if (!spot?.studentId || alreadyOnly) setPicking(key);
+  }
+
+  /** 이름표를 끌기 시작할 때: 되돌리기에 남기고, 함께 움직일 친구들을 고른 상태로 둔다. */
+  function handleMoveStart(keys: string[]) {
+    remember(keys.length > 1 ? `${keys.length}명 함께 옮기기` : "자리 옮기기");
+    const same =
+      keys.length === selectedKeys.length &&
+      keys.every((k) => selectedKeys.includes(k));
+    if (!same) select(keys);
+  }
+
+  /** 끄는 동안 화면의 자리만 바꾼다. 저장은 자동 저장이 잠시 뒤 한 번에 한다. */
+  function handleMoveMarks(moves: MarkMove[]) {
+    setMoved((prev) => {
+      const next = { ...prev };
+      for (const mv of moves) next[mv.id] = { x: mv.x, y: mv.y };
+      return next;
+    });
   }
 
   /** 한 칸 되돌리기 */
@@ -528,7 +597,11 @@ export default function CutPeoplePage() {
   function savePlanImage() {
     const stage = planStageRef.current;
     if (!stage) return;
+    // 고른 친구 테두리는 화면에서만 보이는 표시이므로 그림에는 넣지 않는다.
+    const rings = stage.find(".selection-ring");
+    rings.forEach((n) => n.hide());
     const dataUrl = stage.toDataURL({ pixelRatio: 2 });
+    rings.forEach((n) => n.show());
     const name = safeFileName("plan", "png", `cut${(cut?.order ?? 0) + 1}`);
     downloadDataUrl(dataUrl, name);
     toast.success(`평면도를 그림으로 저장했어요! (${name})`);
@@ -632,6 +705,18 @@ export default function CutPeoplePage() {
               <p>
                 사람이 아닌 네모는 눌러서 <strong>사람 아니에요</strong>로
                 지워요. 평면도의 동그란 이름표는 끌어서 자리를 고칠 수 있어요.
+              </p>
+              <p>
+                이름표를 끌다가 다른 친구와 줄이 맞거나 무대 가운데, 무대 앞
+                번호에 가까워지면 <strong>분홍 선</strong>이 나오면서 착
+                붙어요. 친구 사이 거리(m)도 함께 보여요. (Alt를 누른 채 끌면
+                붙지 않아요)
+              </p>
+              <p>
+                <strong>Ctrl(맥은 ⌘)</strong>을 누른 채 이름표를 누르면 여러
+                명을 고를 수 있어요. 고른 친구 중 한 명을 끌면 모두 같은
+                모양 그대로 함께 움직여요. 고른 이름표를 한 번 더 누르면 이름을
+                바꿀 수 있어요.
               </p>
               <p>
                 얼굴은 알아보지 않아요. 사람 모양만 찾고, 이름은 여러분이
@@ -949,12 +1034,16 @@ export default function CutPeoplePage() {
               showGrid={prefs.showGrid}
               flipped={prefs.flipped}
               stageRef={planStageRef}
-              onMoveMark={(key, x, y) =>
-                setMoved((prev) => ({ ...prev, [key]: { x, y } }))
-              }
-              onSelectMark={(key) => setPicking(key)}
+              selectedIds={selectedKeys}
+              onMoveMarks={handleMoveMarks}
+              onMoveStart={handleMoveStart}
+              onSelectMark={handleSelectMark}
               onLongPressEmpty={(x, y) => addManualSpot({ x, y })}
-              onTapEmpty={(x, y) => placePendingStudent({ x, y })}
+              onTapEmpty={(x, y) => {
+                // 빈 바닥을 누르면 고른 것을 풀고, 직접 넣기 중이면 그 자리에 친구를 놓는다.
+                select([]);
+                placePendingStudent({ x, y });
+              }}
             />
             <div className="toolbar">
               <button
@@ -985,10 +1074,45 @@ export default function CutPeoplePage() {
                 그림으로 저장
               </button>
             </div>
-            <p className="hint">
-              동그란 이름표를 끌어서 자리를 고칠 수 있어요. 빈 곳을 길게 누르면
-              친구를 직접 넣어요.
-            </p>
+            {selectedKeys.length > 0 ? (
+              <div className="select-bar" role="status">
+                <span className="select-bar-text">
+                  <strong>
+                    {selectedKeys.length === 1
+                      ? (studentById[
+                          spots.find((s) => s.key === selectedKeys[0])
+                            ?.studentId ?? ""
+                        ]?.name ?? "이름 없는 자리")
+                      : `${selectedKeys.length}명 선택`}
+                  </strong>
+                  {selectedKeys.length > 1
+                    ? " 한 명을 끌면 모두 함께 움직여요"
+                    : " 골랐어요"}
+                </span>
+                {selectedKeys.length === 1 && (
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-small"
+                    onClick={() => setPicking(selectedKeys[0])}
+                  >
+                    이름 바꾸기
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="btn btn-quiet btn-small"
+                  onClick={() => select([])}
+                >
+                  선택 풀기
+                </button>
+              </div>
+            ) : (
+              <p className="hint">
+                이름표를 끌면 다른 친구나 무대 가운데에 줄이 맞춰져요.
+                Ctrl(맥은 ⌘)을 누른 채 누르면 여러 명을 함께 옮겨요. 빈 곳을
+                길게 누르면 친구를 직접 넣어요.
+              </p>
+            )}
           </section>
         </div>
 
