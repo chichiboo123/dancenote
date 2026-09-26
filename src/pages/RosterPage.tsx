@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { ClipboardPaste, Plus, Trash2, Undo2, UserPlus } from 'lucide-react'
 import { toast } from 'sonner'
@@ -8,6 +8,7 @@ import Modal from '../components/Modal'
 import ConfirmDialog from '../components/ConfirmDialog'
 import StudentChip from '../components/StudentChip'
 import { db } from '../db/db'
+import { useGoBack } from '../lib/navigation'
 import { addStudents, deleteStudent, restoreStudent, updateStudent } from '../db/repo'
 import { PALETTE, textColorOn } from '../lib/colors'
 import { josa, makeShortName, parseNameList } from '../lib/names'
@@ -21,7 +22,7 @@ interface UndoStep {
 
 export default function RosterPage() {
   const { id = '' } = useParams()
-  const navigate = useNavigate()
+  const goBack = useGoBack()
   const inputRef = useRef<HTMLInputElement>(null)
 
   const [name, setName] = useState('')
@@ -236,7 +237,7 @@ export default function RosterPage() {
           <button
             type="button"
             className="btn btn-primary btn-big btn-block next-btn"
-            onClick={() => navigate(`/project/${id}`)}
+            onClick={() => goBack(`/project/${id}`)}
           >
             명단 다 넣었어요
           </button>

@@ -13,7 +13,9 @@ import { toast } from 'sonner'
 import Modal from './Modal'
 import ConfirmDialog from './ConfirmDialog'
 import { createBlankCut, deleteCut, formatTime, reorderCuts, updateCut } from '../db/repo'
-import type { Cut } from '../db/types'
+import type { Cut, Student } from '../db/types'
+import { drawStagePlan } from '../lib/planCanvas'
+import { usePlanColors } from '../lib/planColors'
 
 const ITEM_WIDTH = 172
 const GAP = 12
@@ -28,6 +30,10 @@ interface Props {
   onOpen?: (cut: Cut) => void
   /** 새로 만든 컷으로 이동 (이어 만들기) */
   onCreated?: (cutId: string) => void
+  /** 사진이 없는 컷을 작은 평면도로 보여 줄 때 쓴다. (이름표 색·이름) */
+  students?: Student[]
+  /** 무대 세로 ÷ 가로 (작은 평면도 모양) */
+  stageRatio?: number
 }
 
 /** 필름처럼 늘어놓은 컷 목록. 끌어서 순서를 바꿀 수 있다. */
@@ -38,6 +44,8 @@ export default function CutTimeline({
   onSelect,
   onOpen,
   onCreated,
+  students = [],
+  stageRatio = 0.6,
 }: Props) {
   const [dragging, setDragging] = useState<{ id: string; from: number; to: number; dx: number } | null>(
     null,
@@ -118,12 +126,16 @@ export default function CutTimeline({
               aria-label={`${cut.title} 열기`}
             >
               <span className="timeline-no">{index + 1}</span>
-              <CutImage cut={cut} />
+              <CutImage cut={cut} students={students} stageRatio={stageRatio} />
               <span className="timeline-title">{cut.title}</span>
               <span className="timeline-meta">
                 {cut.placements.length > 0 ? (
                   <>
                     <Users size={14} aria-hidden="true" /> {cut.placements.length}명
+                  </>
+                ) : !cut.imageBlob ? (
+                  <>
+                    <MapPin size={14} aria-hidden="true" /> 친구를 놓아요
                   </>
                 ) : cut.stageCorners ? (
                   <>
@@ -255,7 +267,62 @@ function CutEditor({
   )
 }
 
-function CutImage({ cut }: { cut: Cut }) {
+/** 사진이 없는 컷은 자리를 작은 평면도로 그려 보여 준다. */
+function PlanThumb({
+  cut,
+  students,
+  stageRatio,
+}: {
+  cut: Cut
+  students: Student[]
+  stageRatio: number
+}) {
+  const colors = usePlanColors()
+  const url = useMemo(() => {
+    const W = 320
+    const H = 240
+    const canvas = document.createElement('canvas')
+    canvas.width = W
+    canvas.height = H
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return null
+    ctx.fillStyle = colors.bg
+    ctx.fillRect(0, 0, W, H)
+    let w = W - 28
+    let h = w * stageRatio
+    if (h > H - 28) {
+      h = H - 28
+      w = h / stageRatio
+    }
+    const byId = new Map(students.map((s) => [s.id, s]))
+    drawStagePlan(ctx, {
+      rect: { x: (W - w) / 2, y: (H - h) / 2, width: w, height: h },
+      colors,
+      icons: cut.placements.flatMap((p) => {
+        const s = byId.get(p.studentId)
+        return s ? [{ x: p.x, y: p.y, color: s.color, label: s.shortName }] : []
+      }),
+      showGrid: false,
+      labels: false,
+      showMarks: false,
+      iconRadius: 15,
+    })
+    return canvas.toDataURL('image/png')
+  }, [cut.placements, students, stageRatio, colors])
+
+  if (!url) return <span className="timeline-img timeline-img-empty" />
+  return <img className="timeline-img" src={url} alt="" draggable={false} />
+}
+
+function CutImage({
+  cut,
+  students,
+  stageRatio,
+}: {
+  cut: Cut
+  students: Student[]
+  stageRatio: number
+}) {
   const url = useMemo(
     () => (cut.imageBlob ? URL.createObjectURL(cut.imageBlob) : null),
     [cut.imageBlob],
@@ -270,6 +337,10 @@ function CutImage({ cut }: { cut: Cut }) {
   )
 
   if (!url) {
+    // 사진이 없어도 자리가 있으면(사진 없이 짜기, 사진을 지운 공연) 작은 평면도로 보여 준다.
+    if (cut.placements.length > 0 && students.length > 0) {
+      return <PlanThumb cut={cut} students={students} stageRatio={stageRatio} />
+    }
     return (
       <span className="timeline-img timeline-img-empty">
         <ImageOff size={24} aria-hidden="true" />

@@ -292,11 +292,13 @@ export async function createBlankCut(
   const project = await db.projects.get(projectId)
   const source = options.copyFrom
   const now = Date.now()
+  // 이어 만들면 원래 컷 바로 뒤에 끼워 넣는다. (맨 끝으로 가면 순서를 다시 옮겨야 한다)
+  const order = source ? source.order + 1 : existing.length
 
   const cut: Cut = {
     id: newId(),
     projectId,
-    order: existing.length,
+    order,
     title: source ? `${source.title} 다음` : `컷 ${existing.length + 1}`,
     memo: '',
     source: 'photo',
@@ -313,7 +315,12 @@ export async function createBlankCut(
     updatedAt: now,
   }
 
-  await db.cuts.add(cut)
+  await db.transaction('rw', db.cuts, async () => {
+    for (const c of existing) {
+      if (c.order >= order) await db.cuts.update(c.id, { order: c.order + 1 })
+    }
+    await db.cuts.add(cut)
+  })
   await updateProject(projectId, {})
   return cut.id
 }

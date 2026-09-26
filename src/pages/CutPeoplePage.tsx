@@ -6,6 +6,7 @@ import { Circle, Group, Line, Rect, Text } from "react-konva";
 import type Konva from "konva";
 import {
   Check,
+  ChevronRight,
   EyeOff,
   FlipVertical2,
   Grid3x3,
@@ -40,6 +41,7 @@ import { useAutoSave } from "../lib/useAutoSave";
 import { downloadDataUrl, safeFileName } from "../lib/backup";
 import { josa } from "../lib/names";
 import { useViewPrefs } from "../store/viewPrefs";
+import { cutPath, useGoBack } from "../lib/navigation";
 import type { Point, Student } from "../db/types";
 
 /** 인식으로 찾은 네모 하나 */
@@ -135,6 +137,18 @@ export default function CutPeoplePage() {
     return all.find((x) => x.order === c.order - 1) ?? null;
   }, [cutId]);
 
+  // 다음 컷 (있으면 저장하고 바로 넘어갈 수 있게)
+  const nextCut = useLiveQuery(async () => {
+    const c = await db.cuts.get(cutId);
+    if (!c) return null;
+    const all = await db.cuts
+      .where("projectId")
+      .equals(c.projectId)
+      .sortBy("order");
+    return all.find((x) => x.order > c.order) ?? null;
+  }, [cutId]);
+  const goBack = useGoBack();
+
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [detBoxes, setDetBoxes] = useState<DetBox[]>([]);
   const [named, setNamed] = useState<Record<string, string>>({});
@@ -156,6 +170,8 @@ export default function CutPeoplePage() {
   // 사진이 없는 컷이면 평면도부터 보여 준다. (한 번 정해지면 사용자가 고른 탭을 따른다)
   const [pickedPane, setPickedPane] = useState<"photo" | "plan" | null>(null);
   // 평면도에서 골라 둔 이름표들 (저장하지 않는 화면 상태). 다른 컷으로 가면 저절로 비워진다.
+  // 손가락으로 쓸 때(Ctrl이 없을 때) 여러 명 고르기
+  const [multiPick, setMultiPick] = useState(false);
   const [selection, setSelection] = useState<{ cutId: string; keys: string[] }>({
     cutId,
     keys: [],
@@ -382,7 +398,11 @@ export default function CutPeoplePage() {
   }, [selection, cutId, spots]);
 
   const select = useCallback(
-    (keys: string[]) => setSelection({ cutId, keys }),
+    (keys: string[]) => {
+      setSelection({ cutId, keys });
+      // 모두 풀면 '여러 명 고르기'도 끈다.
+      if (keys.length === 0) setMultiPick(false);
+    },
     [cutId],
   );
 
@@ -611,7 +631,17 @@ export default function CutPeoplePage() {
     await saveSpots(spots);
     await dropPhotoIfNeeded(cutId);
     toast.success("컷을 저장했어요!");
-    navigate(`/project/${id}`);
+    goBack(`/project/${id}`);
+  }
+
+  /** 저장하고 다음 컷으로 넘어간다. (여러 장을 한꺼번에 올렸을 때 목록을 오가지 않아도 되게) */
+  async function handleSaveAndNext() {
+    if (!nextCut) return;
+    await saveSpots(spots);
+    await dropPhotoIfNeeded(cutId);
+    toast.success(`컷을 저장했어요! ${nextCut.title}로 넘어가요.`);
+    // 컷끼리 오간 기록은 쌓지 않는다. ('뒤로'를 누르면 바로 컷 목록으로)
+    navigate(cutPath(id, nextCut), { replace: true });
   }
 
   const planMarks: Mark[] = spots.map((s) => {
@@ -683,11 +713,12 @@ export default function CutPeoplePage() {
   }
 
   const pickingSpot = spots.find((s) => s.key === picking);
+  const hasPhoto = Boolean(cut.imageBlob);
 
   return (
     <>
       <AppHeader
-        backTo={`/project/${id}/cut/${cutId}/stage`}
+        backTo={`/project/${id}`}
         title={cut.title}
         help={{
           title: "이름은 이렇게 붙여요",
@@ -713,10 +744,11 @@ export default function CutPeoplePage() {
                 붙지 않아요)
               </p>
               <p>
-                <strong>Ctrl(맥은 ⌘)</strong>을 누른 채 이름표를 누르면 여러
-                명을 고를 수 있어요. 고른 친구 중 한 명을 끌면 모두 같은
-                모양 그대로 함께 움직여요. 고른 이름표를 한 번 더 누르면 이름을
-                바꿀 수 있어요.
+                이름표를 누른 뒤 아래 <strong>여러 명 고르기</strong>를 켜면
+                여러 명을 고를 수 있어요. (PC는 <strong>Ctrl</strong>, 맥은{" "}
+                <strong>⌘</strong>을 누른 채 클릭) 고른 친구 중 한 명을 끌면
+                모두 같은 모양 그대로 함께 움직여요. 고른 이름표를 한 번 더
+                누르면 이름을 바꿀 수 있어요.
               </p>
               <p>
                 얼굴은 알아보지 않아요. 사람 모양만 찾고, 이름은 여러분이
@@ -779,31 +811,35 @@ export default function CutPeoplePage() {
           </div>
         )}
 
-        <div className="pane-tabs" role="tablist">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={pane === "photo"}
-            className={pane === "photo" ? "is-on" : ""}
-            onClick={() => setPane("photo")}
-          >
-            사진
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={pane === "plan"}
-            className={pane === "plan" ? "is-on" : ""}
-            onClick={() => setPane("plan")}
-          >
-            무대 평면도
-          </button>
-        </div>
+        {hasPhoto && (
+          <div className="pane-tabs" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={pane === "photo"}
+              className={pane === "photo" ? "is-on" : ""}
+              onClick={() => setPane("photo")}
+            >
+              사진
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={pane === "plan"}
+              className={pane === "plan" ? "is-on" : ""}
+              onClick={() => setPane("plan")}
+            >
+              무대 평면도
+            </button>
+          </div>
+        )}
 
-        <div className="work-split">
+        <div className={`work-split${hasPhoto ? "" : " is-single"}`}>
           <section
             className="pane"
-            data-active={pane === "photo"}
+            // 사진 없는 컷(사진 없이 짜기)은 사진 칸 없이 평면도만 보여 준다.
+            hidden={!hasPhoto}
+            data-active={hasPhoto && pane === "photo"}
             aria-label="사진"
           >
             {image ? (
@@ -1002,28 +1038,25 @@ export default function CutPeoplePage() {
                       {showOffStage ? "무대 밖 사람 숨기기" : `무대 밖 ${offStageCount}명 보기`}
                     </button>
                   )}
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={() =>
+                      navigate(`/project/${id}/cut/${cutId}/stage`)
+                    }
+                  >
+                    <MapPin size={20} aria-hidden="true" />
+                    무대 영역 고치기
+                  </button>
                 </div>
               </div>
             )}
 
-            {!image && (
-              <div className="toolbar">
-                <button
-                  type="button"
-                  className="btn btn-ghost"
-                  onClick={undo}
-                  disabled={history.length === 0}
-                >
-                  <Undo2 size={20} aria-hidden="true" />
-                  되돌리기
-                </button>
-              </div>
-            )}
           </section>
 
           <section
             className="pane"
-            data-active={pane === "plan"}
+            data-active={!hasPhoto || pane === "plan"}
             aria-label="무대 평면도"
           >
             <StagePlan
@@ -1035,6 +1068,7 @@ export default function CutPeoplePage() {
               flipped={prefs.flipped}
               stageRef={planStageRef}
               selectedIds={selectedKeys}
+              multiSelect={multiPick}
               onMoveMarks={handleMoveMarks}
               onMoveStart={handleMoveStart}
               onSelectMark={handleSelectMark}
@@ -1046,6 +1080,16 @@ export default function CutPeoplePage() {
               }}
             />
             <div className="toolbar">
+              {/* 사진 칸에도 되돌리기가 있으므로, 둘이 나란히 보이는 넓은 화면에서는 한 번만 보여 준다. */}
+              <button
+                type="button"
+                className={`btn btn-ghost${hasPhoto ? " hide-wide" : ""}`}
+                onClick={undo}
+                disabled={history.length === 0}
+              >
+                <Undo2 size={20} aria-hidden="true" />
+                되돌리기
+              </button>
               <button
                 type="button"
                 className={`btn btn-ghost${prefs.showGrid ? " is-on" : ""}`}
@@ -1063,7 +1107,7 @@ export default function CutPeoplePage() {
                 title="무대를 반대쪽에서 봐요"
               >
                 <FlipVertical2 size={20} aria-hidden="true" />
-                {prefs.flipped ? "무대에서 본 모습" : "객석에서 본 모습"}
+                반대쪽에서 보기
               </button>
               <button
                 type="button"
@@ -1085,32 +1129,45 @@ export default function CutPeoplePage() {
                         ]?.name ?? "이름 없는 자리")
                       : `${selectedKeys.length}명 선택`}
                   </strong>
-                  {selectedKeys.length > 1
-                    ? " 한 명을 끌면 모두 함께 움직여요"
-                    : " 골랐어요"}
+                  {multiPick
+                    ? " · 함께 옮길 친구를 눌러요"
+                    : selectedKeys.length > 1
+                      ? " 한 명을 끌면 모두 함께 움직여요"
+                      : " 골랐어요"}
                 </span>
-                {selectedKeys.length === 1 && (
+                <span className="select-bar-actions">
+                  {selectedKeys.length === 1 && !multiPick && (
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-small"
+                      onClick={() => setPicking(selectedKeys[0])}
+                    >
+                      이름 바꾸기
+                    </button>
+                  )}
                   <button
                     type="button"
-                    className="btn btn-ghost btn-small"
-                    onClick={() => setPicking(selectedKeys[0])}
+                    className={`btn btn-ghost btn-small${multiPick ? " is-on" : ""}`}
+                    onClick={() => setMultiPick((v) => !v)}
+                    aria-pressed={multiPick}
                   >
-                    이름 바꾸기
+                    여러 명 고르기
                   </button>
-                )}
-                <button
-                  type="button"
-                  className="btn btn-quiet btn-small"
-                  onClick={() => select([])}
-                >
-                  선택 풀기
-                </button>
+                  <button
+                    type="button"
+                    className="btn btn-quiet btn-small"
+                    onClick={() => select([])}
+                  >
+                    선택 풀기
+                  </button>
+                </span>
               </div>
             ) : (
               <p className="hint">
-                이름표를 끌면 다른 친구나 무대 가운데에 줄이 맞춰져요.
-                Ctrl(맥은 ⌘)을 누른 채 누르면 여러 명을 함께 옮겨요. 빈 곳을
-                길게 누르면 친구를 직접 넣어요.
+                이름표를 끌면 다른 친구나 무대 가운데에 줄이 맞춰져요. 이름표를
+                누르고 <strong>여러 명 고르기</strong>를 켜면 여러 명을 함께
+                옮겨요. (PC는 Ctrl·⌘ 누르고 클릭) 빈 곳을 길게 누르면 친구를
+                직접 넣어요.
               </p>
             )}
           </section>
@@ -1180,13 +1237,26 @@ export default function CutPeoplePage() {
               </span>
               <span className="save-bar-label">자리를 정했어요</span>
             </div>
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={handleSave}
-            >
-              <Check size={22} aria-hidden="true" />컷 저장하기
-            </button>
+            <div className="save-bar-actions">
+              {nextCut && (
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={handleSaveAndNext}
+                  title={`저장하고 ${nextCut.title}로 넘어가요`}
+                >
+                  다음 컷
+                  <ChevronRight size={22} aria-hidden="true" />
+                </button>
+              )}
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleSave}
+              >
+                <Check size={22} aria-hidden="true" />컷 저장하기
+              </button>
+            </div>
           </div>
         </div>
       </main>

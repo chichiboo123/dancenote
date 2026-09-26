@@ -1,5 +1,5 @@
 import { ChevronLeft, Moon, Sun } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useGoBack } from '../lib/navigation'
 import Logo from './Logo'
 import { useTheme } from '../store/theme'
 import HelpButton from './HelpButton'
@@ -13,7 +13,7 @@ interface Props {
 }
 
 export default function AppHeader({ backTo, title, help }: Props) {
-  const navigate = useNavigate()
+  const goBack = useGoBack()
   const theme = useTheme((s) => s.theme)
   const toggle = useTheme((s) => s.toggle)
 
@@ -24,7 +24,7 @@ export default function AppHeader({ backTo, title, help }: Props) {
           <button
             type="button"
             className="btn btn-quiet btn-icon"
-            onClick={() => navigate(backTo)}
+            onClick={() => goBack(backTo)}
             aria-label="뒤로 가기"
           >
             <ChevronLeft size={26} aria-hidden="true" />

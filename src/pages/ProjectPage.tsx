@@ -16,6 +16,7 @@ import PdfExportButton from '../components/PdfExportButton'
 import AppHeader from '../components/AppHeader'
 import StudentChip from '../components/StudentChip'
 import { db } from '../db/db'
+import { cutPath } from '../lib/navigation'
 
 export default function ProjectPage() {
   const { id = '' } = useParams()
@@ -49,6 +50,7 @@ export default function ProjectPage() {
 
   // 지금 상태를 보고 다음에 할 일을 하나만 골라 알려 준다.
   const cutsWithNames = cuts.filter((c) => c.placements.length > 0).length
+  const firstUnnamed = cuts.find((c) => c.placements.length === 0)
   const nextStep =
     students.length === 0
       ? {
@@ -64,9 +66,7 @@ export default function ProjectPage() {
           }
         : cutsWithNames < cuts.length
           ? {
-              to: `/project/${id}/cut/${
-                cuts.find((c) => c.placements.length === 0)?.id ?? cuts[0].id
-              }/${cuts.find((c) => c.placements.length === 0)?.stageCorners ? 'people' : 'stage'}`,
+              to: cutPath(id, firstUnnamed ?? cuts[0]),
               label: '아직 이름을 안 붙인 컷이 있어요',
               icon: <Users size={24} aria-hidden="true" />,
             }
@@ -155,14 +155,9 @@ export default function ProjectPage() {
           <CutTimeline
             projectId={id}
             cuts={cuts}
-            onOpen={(cut) =>
-              navigate(
-                // 사진이 없거나 무대 영역이 이미 있으면 바로 이름 붙이기로 간다.
-                cut.stageCorners || !cut.imageBlob
-                  ? `/project/${id}/cut/${cut.id}/people`
-                  : `/project/${id}/cut/${cut.id}/stage`,
-              )
-            }
+            students={students}
+            stageRatio={project.stageDepthM / project.stageWidthM}
+            onOpen={(cut) => navigate(cutPath(id, cut))}
             onCreated={(cutId) => navigate(`/project/${id}/cut/${cutId}/people`)}
           />
         )}

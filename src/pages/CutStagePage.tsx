@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
   Check,
@@ -194,6 +194,9 @@ export default function CutStagePage() {
       </>
     )
   }
+
+  // 사진이 없는 컷(사진 없이 짜기, 사진을 지운 컷)은 네 귀퉁이를 정할 수 없으므로 평면도로 바로 보낸다.
+  if (!cut.imageBlob) return <Navigate to={`/project/${id}/cut/${cutId}/people`} replace />
 
   const guide = !done
     ? `${corners.length + 1}번 — ${CORNER_LABELS[corners.length]}${josa(
