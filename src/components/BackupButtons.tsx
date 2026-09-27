@@ -35,7 +35,7 @@ export function ExportProjectButton({ projectId }: { projectId: string }) {
       {open && (
         <Modal title="백업 파일로 저장" onClose={() => setOpen(false)}>
           <p className="hint">
-            공연 이름, 친구 명단, 컷과 동선을 파일 하나에 담아요. 다른 기기에서 불러오거나, 기기를
+            공연 이름, 배우 명단, 컷과 동선을 파일 하나에 담아요. 다른 기기에서 불러오거나, 기기를
             바꾸기 전에 자료를 지킬 때 쓰세요. 파일 이름은 영문으로 저장돼요(브라우저마다 한글
             이름이 깨지는 경우가 있어서예요). 공연 이름은 파일 안에 그대로 들어 있어요.
           </p>
@@ -49,7 +49,7 @@ export function ExportProjectButton({ projectId }: { projectId: string }) {
             <span>
               <strong>사진도 함께 담기</strong>
               <span className="hint">
-                파일이 아주 커져요. 사진에 친구들 얼굴이 담기니 파일을 함부로 공유하지 마세요.
+                파일이 아주 커져요. 사진에 배우들 얼굴이 담기니 파일을 함부로 공유하지 마세요.
               </span>
             </span>
           </label>

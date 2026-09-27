@@ -43,16 +43,16 @@ export interface SnapOptions {
   /** 무대 바닥의 화면 크기(px). 픽셀 문턱을 무대 좌표로 바꾸는 데 쓴다. */
   floorW: number
   floorH: number
-  /** 다른 친구·무대 가운데에 붙는 거리(px) */
+  /** 다른 배우·무대 가운데에 붙는 거리(px) */
   snapPx?: number
 }
 
-/** 다른 친구·무대 가운데에 붙는 거리(px). 너무 넓으면 자유롭게 놓기 어렵다. */
+/** 다른 배우·무대 가운데에 붙는 거리(px). 너무 넓으면 자유롭게 놓기 어렵다. */
 export const SNAP_PX = 10
 
 const EPS = 1e-9
 
-/** 가장 가까운 친구 줄 찾기. 같은 거리면 반대 축으로 더 가까운 친구를 고른다. */
+/** 가장 가까운 배우 줄 찾기. 같은 거리면 반대 축으로 더 가까운 배우를 고른다. */
 function nearestMark(
   value: number,
   other: number,
@@ -76,7 +76,7 @@ function nearestMark(
 /**
  * 끌고 있는 자리 하나(raw)를 가까운 기준에 붙인다.
  *
- * 우선순위: ① 다른 친구와 같은 줄 ② 무대 가운데(0.5) ③ 무대 앞·옆 번호의 반 칸 자리.
+ * 우선순위: ① 다른 배우와 같은 줄 ② 무대 가운데(0.5) ③ 무대 앞·옆 번호의 반 칸 자리.
  * 문턱 안에 들어온 것만 붙으므로 멀리 있는 자리로 갑자기 튀지 않는다.
  */
 export function snapPoint(raw: { x: number; y: number }, targets: SnapTarget[], opts: SnapOptions): SnapResult {

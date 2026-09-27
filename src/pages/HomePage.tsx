@@ -120,7 +120,7 @@ export default function HomePage() {
   const [showOnboarding, setShowOnboarding] = useState(() => !hasSeenOnboarding())
 
   const projects = useLiveQuery(() => db.projects.orderBy('updatedAt').reverse().toArray(), [], [])
-  /** 공연마다 친구 수와 컷 수를 미리 세어 둔다. */
+  /** 공연마다 배우 수와 컷 수를 미리 세어 둔다. */
   const counts = useLiveQuery(
     async () => {
       const [allStudents, allCuts] = await Promise.all([
@@ -160,11 +160,11 @@ export default function HomePage() {
           body: (
             <>
               <p>
-                연습 장면을 사진으로 찍으면, 친구들이 무대 어디에 서 있었는지 위에서 내려다본
+                연습 장면을 사진으로 찍으면, 배우들이 무대 어디에 서 있었는지 위에서 내려다본
                 그림으로 옮겨 주는 앱이에요.
               </p>
               <p>
-                ① 공연을 만들고 ② 친구들 이름을 넣고 ③ 사진을 찍어 컷을 쌓으면, 동선이 움직이는
+                ① 공연을 만들고 ② 배우들 이름을 넣고 ③ 사진을 찍어 컷을 쌓으면, 동선이 움직이는
                 모습을 볼 수 있어요.
               </p>
             </>
@@ -185,7 +185,7 @@ export default function HomePage() {
               우리 공연 동선을 기록해요
             </h2>
             <p className="hero-sub">
-              연습 사진 속 친구들을 찾아서 무대 평면도 위 동그란 이름표로 옮겨 드려요. 컷을
+              연습 사진 속 배우들을 찾아서 무대 평면도 위 동그란 이름표로 옮겨 드려요. 컷을
               이어 붙이면 동선이 움직이는 모습도 볼 수 있어요.
             </p>
             <div className="hero-cta">
@@ -254,7 +254,7 @@ export default function HomePage() {
                     <h3>{p.title}</h3>
                     <p className="project-meta">
                       <span className="meta-pill">
-                        <Users size={14} aria-hidden="true" /> 친구 {counts[p.id]?.students ?? 0}명
+                        <Users size={14} aria-hidden="true" /> 배우 {counts[p.id]?.students ?? 0}명
                       </span>
                       <span className="meta-pill">
                         <Camera size={14} aria-hidden="true" /> 컷 {counts[p.id]?.cuts ?? 0}개

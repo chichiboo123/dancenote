@@ -55,7 +55,7 @@ export default function ProjectPage() {
     students.length === 0
       ? {
           to: `/project/${id}/roster`,
-          label: '친구 이름부터 넣어요',
+          label: '배우 이름부터 넣어요',
           icon: <Users size={24} aria-hidden="true" />,
         }
       : cuts.length === 0
@@ -91,8 +91,8 @@ export default function ProjectPage() {
           title: '이 화면에서 뭘 해요?',
           body: (
             <p>
-              먼저 <strong>친구 명단</strong>에 이름을 넣어요. 그 다음 <strong>컷 기록하기</strong>
-              에서 연습 사진을 찍으면 무대 평면도에 친구들이 나타나요.
+              먼저 <strong>배우 명단</strong>에 이름을 넣어요. 그 다음 <strong>컷 기록하기</strong>
+              에서 연습 사진을 찍으면 무대 평면도에 배우들이 나타나요.
             </p>
           ),
         }}
@@ -117,7 +117,7 @@ export default function ProjectPage() {
               <Users size={28} aria-hidden="true" />
             </span>
             <span className="big-action-text">
-              <strong>친구 명단</strong>
+              <strong>배우 명단</strong>
               <span>{students.length > 0 ? `${students.length}명 등록됨` : '이름을 넣어요'}</span>
             </span>
             <ChevronRight className="big-action-arrow" size={22} aria-hidden="true" />
@@ -164,7 +164,7 @@ export default function ProjectPage() {
 
         {students.length > 0 && (
           <section className="roster-preview">
-            <h2 className="section-title">우리 반 친구들</h2>
+            <h2 className="section-title">우리 공연 배우들</h2>
             <div className="chip-grid">
               {students.map((s) => (
                 <StudentChip

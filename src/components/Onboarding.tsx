@@ -53,7 +53,7 @@ export default function Onboarding({ onClose }: { onClose: () => void }) {
             disabled={index === 0}
           >
             <ChevronLeft size={22} aria-hidden="true" />
-            앞으로
+            이전
           </button>
 
           {last ? (

@@ -68,6 +68,8 @@ export default function ProjectFormPage() {
     e.preventDefault()
     if (!title.trim()) {
       toast.error('공연 이름을 적어 주세요.')
+      // 어디를 고쳐야 하는지 바로 알 수 있게 이름 칸으로 옮겨 준다.
+      document.getElementById('title')?.focus()
       return
     }
     const width = parseMeters(widthText)
@@ -100,7 +102,7 @@ export default function ProjectFormPage() {
         stageDepthM: depth,
         keepPhotos,
       })
-      toast.success('공연을 만들었어요! 이제 친구들 이름을 넣어 볼까요?')
+      toast.success('공연을 만들었어요! 이제 배우들 이름을 넣어 볼까요?')
       navigate(`/project/${newProjectId}/roster`)
     }
   }
@@ -126,7 +128,7 @@ export default function ProjectFormPage() {
           title: '무대 크기는 왜 적어요?',
           body: (
             <p>
-              무대의 가로·세로 길이를 알면 평면도의 모양이 실제 무대와 똑같아지고, 친구 사이
+              무대의 가로·세로 길이를 알면 평면도의 모양이 실제 무대와 똑같아지고, 배우 사이
               거리도 알 수 있어요. 대강만 알면 비슷한 크기 버튼을 고르고, 실제 길이를 알면{' '}
               <strong>사용자 지정</strong>을 눌러 직접 적어요. 나중에 언제든 고칠 수 있어요.
             </p>

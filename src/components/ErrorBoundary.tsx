@@ -34,7 +34,7 @@ export default class ErrorBoundary extends Component<Props, State> {
           <AlertTriangle size={48} aria-hidden="true" />
           <h2>앗, 이 화면에 문제가 생겼어요</h2>
           <p>
-            지금까지 저장한 공연과 친구 명단은 <strong>그대로 있어요.</strong> 아래 버튼으로 다시
+            지금까지 저장한 공연과 배우 명단은 <strong>그대로 있어요.</strong> 아래 버튼으로 다시
             열어 보세요.
           </p>
 

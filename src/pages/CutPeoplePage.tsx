@@ -67,7 +67,7 @@ function footOf(box: PersonBox): Point {
 }
 
 /**
- * 지난 컷에서 가까이 있던 친구를 이번 컷의 이름 없는 자리에 짝지어 준다.
+ * 지난 컷에서 가까이 있던 배우를 이번 컷의 이름 없는 자리에 짝지어 준다.
  * 가장 가까운 짝부터 차례로 정하고, 너무 멀리 떨어진 짝은 만들지 않는다.
  */
 function matchByPrevCut(
@@ -251,7 +251,7 @@ export default function CutPeoplePage() {
       try {
         const started = performance.now();
         // 낮은 기준으로 한 번만 찾아 두고, 슬라이더는 그 결과를 걸러 내기만 한다.
-        // 무대 영역을 알려 주면 무대 근처를 확대해서 뒷줄 친구까지 찾고, 무대 밖 사람은 가려낸다.
+        // 무대 영역을 알려 주면 무대 근처를 확대해서 뒷줄 배우까지 찾고, 무대 밖 사람은 가려낸다.
         const boxes = await detectPeople(img, 0.12, {
           stageCorners: cornersKey ? JSON.parse(cornersKey) : undefined,
           onProgress: (done, total) => setProgress({ done, total }),
@@ -385,7 +385,7 @@ export default function CutPeoplePage() {
     [spots],
   );
 
-  /** 이 컷에 아직 자리를 안 잡은 친구들 */
+  /** 이 컷에 아직 자리를 안 잡은 배우들 */
   const missingStudents = useMemo(
     () => students.filter((student) => !placedIds.has(student.id)),
     [students, placedIds],
@@ -468,7 +468,7 @@ export default function CutPeoplePage() {
 
   /**
    * 평면도에서 이름표를 눌렀을 때.
-   * - 그냥 누르기: 그 친구 하나만 고른다. 이미 혼자 골라 둔 친구를 한 번 더 누르면 이름을 바꾼다.
+   * - 그냥 누르기: 그 배우 하나만 고른다. 이미 혼자 골라 둔 배우를 한 번 더 누르면 이름을 바꾼다.
    *   (이름 없는 자리는 바로 이름 고르기를 연다)
    * - Ctrl(⌘) 누르고 누르기: 고른 목록에 넣거나 뺀다.
    */
@@ -487,7 +487,7 @@ export default function CutPeoplePage() {
     if (!spot?.studentId || alreadyOnly) setPicking(key);
   }
 
-  /** 이름표를 끌기 시작할 때: 되돌리기에 남기고, 함께 움직일 친구들을 고른 상태로 둔다. */
+  /** 이름표를 끌기 시작할 때: 되돌리기에 남기고, 함께 움직일 배우들을 고른 상태로 둔다. */
   function handleMoveStart(keys: string[]) {
     remember(keys.length > 1 ? `${keys.length}명 함께 옮기기` : "자리 옮기기");
     const same =
@@ -518,13 +518,13 @@ export default function CutPeoplePage() {
     toast.success(`되돌렸어요: ${last.label}`);
   }
 
-  /** 직접 넣기 모드에서 고른 친구를 이 자리에 놓는다. */
+  /** 직접 넣기 모드에서 고른 배우를 이 자리에 놓는다. */
   function placePendingStudent(
     stage: Point,
     bbox?: [number, number, number, number],
   ) {
     if (!placingStudentId) return false;
-    remember(`${studentById[placingStudentId]?.name ?? "친구"} 넣기`);
+    remember(`${studentById[placingStudentId]?.name ?? "배우"} 넣기`);
     const key = `m${Date.now()}`;
     const at = clampToStage(stage);
     setManual((prev) => [
@@ -534,7 +534,7 @@ export default function CutPeoplePage() {
     const student = studentById[placingStudentId];
     setPlacingStudentId(null);
     toast.success(
-      `${student?.name ?? "친구"} 자리를 넣었어요. (${describePosition(at.x)})`,
+      `${student?.name ?? "배우"} 자리를 넣었어요. (${describePosition(at.x)})`,
     );
     return true;
   }
@@ -557,7 +557,7 @@ export default function CutPeoplePage() {
 
   async function handlePick(studentId: string) {
     if (!picking) return;
-    remember(`${studentById[studentId]?.name ?? "친구"} 이름 붙이기`);
+    remember(`${studentById[studentId]?.name ?? "배우"} 이름 붙이기`);
     setNamed((prev) => ({ ...prev, [picking]: studentId }));
     setPicking(null);
     const student = studentById[studentId];
@@ -618,7 +618,7 @@ export default function CutPeoplePage() {
   function savePlanImage() {
     const stage = planStageRef.current;
     if (!stage) return;
-    // 고른 친구 테두리는 화면에서만 보이는 표시이므로 그림에는 넣지 않는다.
+    // 고른 배우 테두리는 화면에서만 보이는 표시이므로 그림에는 넣지 않는다.
     const rings = stage.find(".selection-ring");
     rings.forEach((n) => n.hide());
     const dataUrl = stage.toDataURL({ pixelRatio: 2 });
@@ -731,7 +731,7 @@ export default function CutPeoplePage() {
                 이름을 고르면 돼요.
               </p>
               <p>
-                못 찾은 친구가 있으면{" "}
+                못 찾은 배우가 있으면{" "}
                 <strong>사진이나 평면도의 빈 곳을 길게 누르면</strong> 직접 넣을
                 수 있어요.
               </p>
@@ -740,15 +740,15 @@ export default function CutPeoplePage() {
                 지워요. 평면도의 동그란 이름표는 끌어서 자리를 고칠 수 있어요.
               </p>
               <p>
-                이름표를 끌다가 다른 친구와 줄이 맞거나 무대 가운데, 무대 앞
+                이름표를 끌다가 다른 배우와 줄이 맞거나 무대 가운데, 무대 앞
                 번호에 가까워지면 <strong>분홍 선</strong>이 나오면서 착
-                붙어요. 친구 사이 거리(m)도 함께 보여요. (Alt를 누른 채 끌면
+                붙어요. 배우 사이 거리(m)도 함께 보여요. (Alt를 누른 채 끌면
                 붙지 않아요)
               </p>
               <p>
                 이름표를 누른 뒤 아래 <strong>여러 명 고르기</strong>를 켜면
                 여러 명을 고를 수 있어요. (PC는 <strong>Ctrl</strong>, 맥은{" "}
-                <strong>⌘</strong>을 누른 채 클릭) 고른 친구 중 한 명을 끌면
+                <strong>⌘</strong>을 누른 채 클릭) 고른 배우 중 한 명을 끌면
                 모두 같은 모양 그대로 함께 움직여요. 고른 이름표를 한 번 더
                 누르면 이름을 바꿀 수 있어요.
               </p>
@@ -772,8 +772,8 @@ export default function CutPeoplePage() {
           )}
           <span>
             {placingStudentId
-              ? `${studentById[placingStudentId]?.name ?? "친구"}${josa(
-                  studentById[placingStudentId]?.name ?? "친구",
+              ? `${studentById[placingStudentId]?.name ?? "배우"}${josa(
+                  studentById[placingStudentId]?.name ?? "배우",
                   "이",
                   "가",
                 )} 선 자리를 사진이나 평면도에서 눌러요`
@@ -784,8 +784,8 @@ export default function CutPeoplePage() {
                   : namedCount > 0
                     ? `모두 이름을 붙였어요! ${namedCount}명`
                     : cut?.imageBlob
-                      ? "빈 곳을 길게 눌러 친구를 넣어 보세요."
-                      : "아래에서 친구 이름을 누르고, 평면도에서 설 자리를 눌러요."}
+                      ? "빈 곳을 길게 눌러 배우를 넣어 보세요."
+                      : "아래에서 배우 이름을 누르고, 평면도에서 설 자리를 눌러요."}
           </span>
         </div>
 
@@ -972,7 +972,7 @@ export default function CutPeoplePage() {
                 <MapPin size={44} aria-hidden="true" />
                 <p>이 컷에는 사진이 없어요.</p>
                 <p>
-                  <strong>무대 평면도</strong>에서 친구를 직접 놓고 끌어서
+                  <strong>무대 평면도</strong>에서 배우를 직접 놓고 끌어서
                   동선을 짜 보세요.
                 </p>
               </div>
@@ -1066,7 +1066,7 @@ export default function CutPeoplePage() {
               stageDepthM={project.stageDepthM}
               markScale={MARK_SIZE_SCALE[prefs.markSize]}
               onMarqueeSelect={(keys, additive) => {
-                // 빈 바닥에서 끌어 네모 안의 친구들을 한꺼번에 고른다.
+                // 빈 바닥에서 끌어 네모 안의 배우들을 한꺼번에 고른다.
                 if (additive || multiPick) {
                   select([...new Set([...selectedKeys, ...keys])]);
                 } else {
@@ -1085,7 +1085,7 @@ export default function CutPeoplePage() {
               onSelectMark={handleSelectMark}
               onLongPressEmpty={(x, y) => addManualSpot({ x, y })}
               onTapEmpty={(x, y) => {
-                // 빈 바닥을 누르면 고른 것을 풀고, 직접 넣기 중이면 그 자리에 친구를 놓는다.
+                // 빈 바닥을 누르면 고른 것을 풀고, 직접 넣기 중이면 그 자리에 배우를 놓는다.
                 select([]);
                 placePendingStudent({ x, y });
               }}
@@ -1142,7 +1142,7 @@ export default function CutPeoplePage() {
                       : `${selectedKeys.length}명 선택`}
                   </strong>
                   {multiPick
-                    ? " · 함께 옮길 친구를 눌러요"
+                    ? " · 함께 옮길 배우를 눌러요"
                     : selectedKeys.length > 1
                       ? " 한 명을 끌면 모두 함께 움직여요"
                       : " 골랐어요"}
@@ -1176,11 +1176,11 @@ export default function CutPeoplePage() {
               </div>
             ) : (
               <p className="hint">
-                이름표를 끌면 다른 친구, 무대 가운데, 무대 앞·옆 번호에 줄이
+                이름표를 끌면 다른 배우, 무대 가운데, 무대 앞·옆 번호에 줄이
                 맞춰져요. 빈 바닥에서 <strong>끌어 네모를 그리면</strong> 그
-                안의 친구들을 한꺼번에 골라 함께 옮겨요. (하나씩 더하려면 이름표를
+                안의 배우들을 한꺼번에 골라 함께 옮겨요. (하나씩 더하려면 이름표를
                 누르고 여러 명 고르기, PC는 Ctrl·⌘ + 클릭) 빈 곳을 길게 누르면
-                친구를 직접 넣어요.
+                배우를 직접 넣어요.
               </p>
             )}
           </section>
@@ -1188,18 +1188,18 @@ export default function CutPeoplePage() {
 
         <section className="missing-wrap">
           <h2 className="section-title">
-            <UserPlus size={20} aria-hidden="true" /> 아직 자리를 안 정한 친구
+            <UserPlus size={20} aria-hidden="true" /> 아직 자리를 안 정한 배우
             {missingStudents.length > 0 && (
               <span className="count-badge">{missingStudents.length}</span>
             )}
           </h2>
           {missingStudents.length === 0 ? (
-            <p className="hint">모든 친구가 자리를 잡았어요! 👏</p>
+            <p className="hint">모든 배우가 자리를 잡았어요! 👏</p>
           ) : (
             <>
               <p className="hint">
-                앱이 못 찾은 친구는 여기서 이름을 누른 다음, 사진이나 평면도에서
-                그 친구가 선 자리를 한 번 누르면 들어가요.
+                앱이 못 찾은 배우는 여기서 이름을 누른 다음, 사진이나 평면도에서
+                그 배우가 선 자리를 한 번 누르면 들어가요.
               </p>
               <div className="chip-grid">
                 {missingStudents.map((student) => (

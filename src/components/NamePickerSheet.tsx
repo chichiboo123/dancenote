@@ -43,7 +43,7 @@ export default function NamePickerSheet({
 
   return (
     <Modal title="누구인가요?" onClose={onClose} wide>
-      <p className="hint">이름을 누르면 이 자리에 붙어요. 이미 넣은 친구는 흐리게 보여요.</p>
+      <p className="hint">이름을 누르면 이 자리에 붙어요. 이미 넣은 배우는 흐리게 보여요.</p>
 
       <div className="picker-grid">
         {sorted.map((s) => {
