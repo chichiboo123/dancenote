@@ -14,10 +14,11 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import AppHeader from '../components/AppHeader'
-import StagePlan, { type Mark, type Trail } from '../components/StagePlan'
+import StagePlan, { type Trail } from '../components/StagePlan'
 import CutTimeline from '../components/CutTimeline'
 import PdfExportButton from '../components/PdfExportButton'
 import PptxExportButton from '../components/PptxExportButton'
+import VideoExportButton from '../components/VideoExportButton'
 import { db } from '../db/db'
 import { textColorOn } from '../lib/colors'
 import { downloadDataUrl, safeFileName } from '../lib/backup'
@@ -32,17 +33,7 @@ import {
   type TrailMode,
 } from '../store/viewPrefs'
 import type { Cut, Student } from '../db/types'
-
-/** 0 ~ 마지막 컷 사이로 맞춘다. NaN이 들어와도 0이 된다. */
-function clampIndex(value: number, lastIndex: number): number {
-  if (!Number.isFinite(value)) return 0
-  return Math.min(lastIndex, Math.max(0, value))
-}
-
-/** 시작과 끝을 부드럽게 (가속 → 감속) */
-function ease(t: number) {
-  return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2
-}
+import { clampIndex, marksAt, trailsAt } from '../lib/playback'
 
 export default function PlayPage() {
   const { id = '' } = useParams()
@@ -132,81 +123,20 @@ export default function PlayPage() {
     setPlaying(true)
   }, [cuts.length, lastIndex, seek])
 
-  /** 지금 이 순간 학생들이 서 있는 자리 */
-  const marks: Mark[] = useMemo(() => {
-    if (cuts.length === 0) return []
-    // 컷이 지워지는 순간 등 어떤 경우에도 없는 컷을 읽지 않도록 범위를 좁힌다.
-    const i = clampIndex(Math.floor(progress), lastIndex)
-    const f = ease(Math.min(1, Math.max(0, progress - i)))
-    const a = cuts[i] ?? cuts[0]
-    const b = cuts[clampIndex(i + 1, lastIndex)] ?? a
+  /** 지금 이 순간 배우들이 서 있는 자리 */
+  const marks = useMemo(
+    () => marksAt(cuts, studentById, progress, focusId),
+    [cuts, studentById, progress, focusId],
+  )
 
-    const ids = new Set<string>([
-      ...a.placements.map((p) => p.studentId),
-      ...b.placements.map((p) => p.studentId),
-    ])
-
-    const list: Mark[] = []
-    for (const studentId of ids) {
-      const student = studentById[studentId]
-      if (!student) continue
-      const pa = a.placements.find((p) => p.studentId === studentId)
-      const pb = b.placements.find((p) => p.studentId === studentId)
-
-      let x: number
-      let y: number
-      let opacity = 1
-      if (pa && pb) {
-        x = pa.x + (pb.x - pa.x) * f
-        y = pa.y + (pb.y - pa.y) * f
-      } else if (pa) {
-        x = pa.x
-        y = pa.y
-        opacity = 1 - f // 다음 컷에 없으면 스르르 사라진다
-      } else {
-        x = pb!.x
-        y = pb!.y
-        opacity = f // 다음 컷에서 새로 나타난다
-      }
-
-      list.push({
-        id: studentId,
-        x,
-        y,
-        color: student.color,
-        label: student.shortName,
-        emoji: student.emoji,
-        opacity,
-        faded: Boolean(focusId) && focusId !== studentId,
-      })
-    }
-    return list
-  }, [cuts, progress, lastIndex, studentById, focusId])
-
-  /**
-   * 지나온 길
-   * - '직전 컷에서': 컷 사이를 지나는 중이면 떠난 컷 → 지금 자리, 컷에 멈춰 있으면 바로 앞 컷 → 이 컷
-   * - '처음부터 전체': 첫 컷부터 지금 자리까지 전부
-   * - 한 배우만 따라가는 중이면 그 배우의 길만 그린다. (다른 배우 길은 흐리게도 그리지 않는다)
-   */
-  const trails: Trail[] = useMemo(() => {
-    if (!prefs.showTrails || cuts.length < 2) return []
-    const upto = clampIndex(Math.floor(progress), lastIndex)
-    const resting = progress - upto < 0.001
-    const from = prefs.trailMode === 'all' ? 0 : resting ? Math.max(0, upto - 1) : upto
-    const shown = focusId ? students.filter((s) => s.id === focusId) : students
-    return shown.flatMap((student) => {
-      const points: { x: number; y: number }[] = []
-      for (let i = from; i <= upto; i++) {
-        const p = cuts[i]?.placements.find((pl) => pl.studentId === student.id)
-        if (p) points.push({ x: p.x, y: p.y })
-      }
-      const now = marks.find((m) => m.id === student.id)
-      if (now) points.push({ x: now.x, y: now.y })
-      if (points.length < 2) return []
-      return [{ id: student.id, color: student.color, points }]
-    })
-  }, [prefs.showTrails, prefs.trailMode, cuts, progress, lastIndex, students, marks, focusId])
+  /** 지나온 길 (범위·따라가기 규칙은 lib/playback.ts) */
+  const trails: Trail[] = useMemo(
+    () =>
+      prefs.showTrails
+        ? trailsAt(cuts, students, progress, marks, { trailMode: prefs.trailMode, focusId })
+        : [],
+    [prefs.showTrails, prefs.trailMode, cuts, progress, students, marks, focusId],
+  )
 
   function savePlanImage() {
     const stage = planStageRef.current
@@ -463,6 +393,13 @@ export default function PlayPage() {
                   </button>
                   <PdfExportButton projectId={id} className="btn btn-ghost btn-small" />
                   <PptxExportButton projectId={id} className="btn btn-ghost btn-small" />
+                  <VideoExportButton
+                    projectId={id}
+                    focusId={focusId}
+                    focusName={focusId ? studentById[focusId]?.name : undefined}
+                    className="btn btn-ghost btn-small"
+                    disabled={cuts.length < 2}
+                  />
                 </div>
               </div>
             </div>

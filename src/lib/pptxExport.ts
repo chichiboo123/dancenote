@@ -3,6 +3,7 @@ import { drawStagePlan } from './planCanvas'
 import { PRINT_COLORS, cutPlanLayers, formatSec } from './pdfExport'
 import { describePosition } from './stageMarks'
 import type { Cut, Project, Student } from '../db/types'
+import type { TrailMode } from '../store/viewPrefs'
 
 /**
  * 컷 하나를 한 장에 크게 넣은 발표용 PPTX를 만든다. (오픈소스 PptxGenJS 사용)
@@ -15,8 +16,12 @@ import type { Cut, Project, Student } from '../db/types'
 export interface PptxOptions {
   /** 지나온 길(이전 컷에서 온 길)도 그릴지 */
   showTrails: boolean
+  /** 지나온 길 범위 (화면 동선 재생과 같게) */
+  trailMode: TrailMode
   showGrid: boolean
   flipped: boolean
+  /** 이름표 크기 (화면 설정과 같게) */
+  markScale: number
 }
 
 /** 16:9 와이드 슬라이드 크기(인치) */
@@ -102,7 +107,7 @@ export async function exportCutsToPptx(
     }
 
     // 평면도: 남은 자리 안에서 비율을 지키며 가장 크게, 가운데에
-    const plan = renderPlanImage(project, cut, cuts[index - 1], studentById, options)
+    const plan = renderPlanImage(project, cuts, index, students, studentById, options)
     const boxW = SLIDE_W - MARGIN * 2
     const boxH = SLIDE_H - top - 0.55
     let w = boxW
@@ -134,8 +139,9 @@ export async function exportCutsToPptx(
 /** 컷 하나의 평면도를 큰 그림으로 그린다. (무대 뒤·객석 글자와 번호 자리까지 포함) */
 function renderPlanImage(
   project: Project,
-  cut: Cut,
-  previous: Cut | undefined,
+  cuts: Cut[],
+  cutIndex: number,
+  students: Student[],
   studentById: Record<string, Student>,
   options: PptxOptions,
 ): { dataUrl: string; width: number; height: number } {
@@ -160,7 +166,7 @@ function renderPlanImage(
 
   // 뒤집어 보면 번호가 위로 가므로 위아래 여백을 바꿔 준다.
   const y = options.flipped ? padBottom : padTop
-  const { icons, trails } = cutPlanLayers(cut, previous, studentById, options.showTrails)
+  const { icons, trails } = cutPlanLayers(cuts, cutIndex, students, studentById, options)
   drawStagePlan(ctx, {
     rect: { x: padX, y, width: planW, height: planH },
     colors: PRINT_COLORS,
@@ -168,7 +174,7 @@ function renderPlanImage(
     trails,
     showGrid: options.showGrid,
     flipped: options.flipped,
-    iconRadius: Math.max(14, planW / 19),
+    markScale: options.markScale,
     labelFontSize: LABEL_FONT,
   })
 

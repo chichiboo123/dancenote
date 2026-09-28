@@ -1099,3 +1099,19 @@
     display: none;
   }
 }
+
+/* 동선 영상 만드는 중 진행 막대 */
+.video-progress {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.video-progress progress {
+  flex: 1;
+  height: 10px;
+  accent-color: var(--c-primary);
+}
