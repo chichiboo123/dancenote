@@ -135,7 +135,7 @@ export default function CutTimeline({
                   </>
                 ) : !cut.imageBlob ? (
                   <>
-                    <MapPin size={14} aria-hidden="true" /> 친구를 놓아요
+                    <MapPin size={14} aria-hidden="true" /> 배우를 놓아요
                   </>
                 ) : cut.stageCorners ? (
                   <>

@@ -176,7 +176,7 @@ export default function CutStagePage() {
     toast.success(
       filled > 0
         ? `무대 영역을 정했어요! 함께 올린 컷 ${filled}개에도 넣어 두었어요.`
-        : '무대 영역을 정했어요! 이제 친구들 이름을 붙여 볼까요?',
+        : '무대 영역을 정했어요! 이제 배우들 이름을 붙여 볼까요?',
     )
     navigate(`/project/${id}/cut/${cutId}/people`)
   }
@@ -383,7 +383,7 @@ export default function CutStagePage() {
             </div>
             {done && testMarks.length === 0 && (
               <p className="hint">
-                사진에서 친구가 서 있는 발끝을 눌러 보세요. 평면도에서도 같은 자리에 점이 생기면 잘
+                사진에서 배우가 서 있는 발끝을 눌러 보세요. 평면도에서도 같은 자리에 점이 생기면 잘
                 맞춘 거예요.
               </p>
             )}

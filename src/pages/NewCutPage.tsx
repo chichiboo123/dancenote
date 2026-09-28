@@ -128,7 +128,7 @@ export default function NewCutPage() {
               className="big-action"
               onClick={async () => {
                 const cutId = await createBlankCut(id)
-                toast.success('빈 컷을 만들었어요. 평면도에서 친구를 놓아 보세요!')
+                toast.success('빈 컷을 만들었어요. 평면도에서 배우를 놓아 보세요!')
                 navigate(`/project/${id}/cut/${cutId}/people`)
               }}
             >

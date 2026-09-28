@@ -300,7 +300,7 @@
   color: var(--c-ink-soft);
 }
 
-/* 평면도에서 골라 둔 친구 안내 (고른 동안에만 보인다) */
+/* 평면도에서 골라 둔 배우 안내 (고른 동안에만 보인다) */
 .select-bar {
   display: flex;
   flex-wrap: wrap;
@@ -683,7 +683,7 @@
   font-size: 15px;
 }
 
-/* 아직 자리를 안 정한 친구 */
+/* 아직 자리를 안 정한 배우 */
 .missing-wrap {
   margin-top: var(--sp-3);
   padding: var(--sp-4) var(--sp-5);

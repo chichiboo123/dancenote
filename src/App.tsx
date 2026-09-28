@@ -109,6 +109,8 @@ export default function App() {
         richColors
         // 머리말(뒤로·도움말 버튼)을 가리지 않도록 조금 내려서 띄운다.
         offset={76}
+        // 폰에서는 sonner가 따로 쓰는 값(16px)이 적용되어 머리말을 가리므로 똑같이 내려 준다.
+        mobileOffset={{ top: 76 }}
         duration={2600}
         // 알림이 쌓여 안내 띠를 가리지 않도록 한 번에 두 개까지만
         visibleToasts={2}

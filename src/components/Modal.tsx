@@ -19,18 +19,27 @@ export default function Modal({
 }) {
   const boxRef = useRef<HTMLDivElement>(null)
   const openerRef = useRef<HTMLElement | null>(null)
+  // 부모가 다시 그려질 때마다 onClose가 새로 만들어져도, 아래 준비(첫 칸에 포커스 두기 등)를
+  // 다시 하지 않도록 최신 onClose만 따로 들고 있는다. (다시 하면 글자를 칠 때마다 포커스가 닫기 버튼으로 튄다)
+  const onCloseRef = useRef(onClose)
+  useEffect(() => {
+    onCloseRef.current = onClose
+  })
 
   useEffect(() => {
     // 열기 전에 어디에 있었는지 기억해 두었다가, 닫을 때 그 자리로 돌려보낸다.
     openerRef.current = document.activeElement as HTMLElement | null
 
     const box = boxRef.current
-    const first = box?.querySelector<HTMLElement>(FOCUSABLE)
-    ;(first ?? box)?.focus()
+    // 안쪽 칸이 스스로 포커스를 잡았으면(autoFocus) 그대로 둔다.
+    if (!box?.contains(document.activeElement)) {
+      const first = box?.querySelector<HTMLElement>(FOCUSABLE)
+      ;(first ?? box)?.focus()
+    }
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose()
+        onCloseRef.current()
         return
       }
       // 탭 키가 대화상자 밖으로 빠져나가지 않게 가둔다.
@@ -60,7 +69,7 @@ export default function Modal({
       document.body.style.overflow = previousOverflow
       openerRef.current?.focus?.()
     }
-  }, [onClose])
+  }, [])
 
   return (
     <div className="modal-backdrop" onMouseDown={onClose}>

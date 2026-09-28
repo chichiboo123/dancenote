@@ -494,7 +494,7 @@ export default function StagePlan({
     return nodes
   }
 
-  /** 맞춤선 글자: 친구 사이 실제 거리(m)와 붙은 자리 이름 */
+  /** 맞춤선 글자: 배우 사이 실제 거리(m)와 붙은 자리 이름 */
   function renderGuideLabels(g: ActiveGuides) {
     const a = toView(g.anchor.x, g.anchor.y)
     const nodes: React.ReactNode[] = []
@@ -536,7 +536,7 @@ export default function StagePlan({
 
   /** 화면 낭독기가 읽을 수 있는 설명 (캔버스는 그림이라 읽지 못한다) */
   const spokenSummary = useMemo(() => {
-    if (marks.length === 0) return '무대 평면도예요. 아직 놓인 친구가 없어요.'
+    if (marks.length === 0) return '무대 평면도예요. 아직 놓인 배우가 없어요.'
     const where = (m: Mark) =>
       `${m.label} — ${describePosition(m.x)}, ${m.y < 0.34 ? '무대 뒤' : m.y > 0.66 ? '무대 앞' : '가운데'}`
     return `무대 평면도예요. ${marks.length}명이 있어요. ${marks.map(where).join(', ')}.`
@@ -857,7 +857,7 @@ export default function StagePlan({
                   onDragEnd={handleDragEnd}
                 >
                   <Circle radius={iconR + 2} fill="rgba(31,42,68,0.22)" y={2} listening={false} />
-                  {/* 고른 친구: 이름표는 그대로 두고 바깥에만 테두리를 두른다. (그림 저장 때는 빠진다) */}
+                  {/* 고른 배우: 이름표는 그대로 두고 바깥에만 테두리를 두른다. (그림 저장 때는 빠진다) */}
                   {selected && (
                     <Circle
                       name="selection-ring"

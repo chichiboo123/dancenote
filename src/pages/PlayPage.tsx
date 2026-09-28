@@ -238,9 +238,9 @@ export default function PlayPage() {
           title: '동선 재생은 이렇게 써요',
           body: (
             <>
-              <p>▶ 버튼을 누르면 컷 1 → 2 → 3 순서로 친구들이 움직여요. 속도도 고를 수 있어요.</p>
+              <p>▶ 버튼을 누르면 컷 1 → 2 → 3 순서로 배우들이 움직여요. 속도도 고를 수 있어요.</p>
               <p>
-                아래 친구 이름을 누르면 <strong>그 친구만 진하게</strong> 보여요. 한 번 더 누르면
+                아래 배우 이름을 누르면 <strong>그 배우만 진하게</strong> 보여요. 한 번 더 누르면
                 모두 다시 보여요.
               </p>
               <p>
@@ -390,11 +390,11 @@ export default function PlayPage() {
                   </button>
                 </div>
 
-                {/* 한 친구만 따라가기 */}
+                {/* 한 배우만 따라가기 */}
                 {students.length > 0 && (
                   <section>
                     <p className="side-label">
-                      <Users size={14} aria-hidden="true" /> 한 친구만 따라가기
+                      <Users size={14} aria-hidden="true" /> 한 배우만 따라가기
                     </p>
                     <div style={{ height: 'var(--sp-3)' }} />
                     <div className="chip-grid">

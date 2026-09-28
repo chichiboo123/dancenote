@@ -113,6 +113,15 @@ export default function RosterPage() {
   async function handleSaveEdit(patch: Partial<Student>) {
     if (!editing) return
     const before = editing
+    const changed = (Object.keys(patch) as (keyof Student)[]).some((k) => patch[k] !== before[k])
+    if (!changed) {
+      setEditing(null)
+      return
+    }
+    if (patch.name && patch.name !== before.name && students.some((s) => s.id !== before.id && s.name === patch.name)) {
+      toast.error(`${patch.name}${josa(patch.name, '은', '는')} 이미 명단에 있어요. 다른 이름을 적어 주세요.`)
+      return
+    }
     await updateStudent(before.id, patch)
     pushUndo({
       label: `${before.name} 고치기`,
@@ -151,7 +160,7 @@ export default function RosterPage() {
     <>
       <AppHeader
         backTo={`/project/${id}`}
-        title="친구 명단"
+        title="배우 명단"
         help={{
           title: '명단은 이렇게 넣어요',
           body: (
@@ -184,7 +193,7 @@ export default function RosterPage() {
 
         <form className="card add-row" onSubmit={handleAddOne}>
           <div className="field add-field">
-            <label htmlFor="student-name">친구 이름</label>
+            <label htmlFor="student-name">배우 이름</label>
             <input
               id="student-name"
               ref={inputRef}
@@ -220,7 +229,7 @@ export default function RosterPage() {
         {students.length === 0 ? (
           <div className="empty">
             <UserPlus size={48} aria-hidden="true" />
-            <p>아직 친구가 없어요.</p>
+            <p>아직 배우가 없어요.</p>
             <p>위 칸에 이름을 적고 &lsquo;넣기&rsquo;를 눌러 보세요.</p>
           </div>
         ) : (
@@ -262,6 +271,7 @@ export default function RosterPage() {
             onChange={(e) => setPasteText(e.target.value)}
             placeholder={'이송내\n장배영\n유의정'}
             aria-label="이름 목록"
+            autoFocus
           />
           <p className="paste-count">찾은 이름: {pasteCount}명</p>
           <div className="confirm-actions">
@@ -292,7 +302,7 @@ export default function RosterPage() {
 
       {confirmDelete && (
         <ConfirmDialog
-          title="이 친구를 명단에서 뺄까요?"
+          title="이 배우를 명단에서 뺄까요?"
           message={`${confirmDelete.name}${josa(
             confirmDelete.name,
             '을',
@@ -307,7 +317,6 @@ export default function RosterPage() {
   )
 }
 
-/** 학생 한 명 고치기 (이름 · 배역 · 색) */
 /** 이름표 모양으로 고를 수 있는 이모지 (배역·동물·자연) */
 const EMOJI_CHOICES = [
   '🐶', '🐱', '🐰', '🦊', '🐻', '🐼', '🐯', '🦁', '🐸', '🐵', '🐧', '🐤',
@@ -326,6 +335,7 @@ function firstGrapheme(text: string): string {
   return Array.from(t)[0] ?? ''
 }
 
+/** 배우 한 명 고치기 (이름 · 배역 · 색 · 모양) */
 function StudentEditor({
   student,
   othersShortNames,
