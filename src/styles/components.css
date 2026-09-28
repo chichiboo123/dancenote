@@ -383,6 +383,11 @@
   background: var(--c-surface-2);
 }
 
+/* 두 가지 중 고르기 */
+.toolbar.segmented.segmented-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
 .toolbar.segmented > .btn {
   flex: none;
   min-height: 44px;

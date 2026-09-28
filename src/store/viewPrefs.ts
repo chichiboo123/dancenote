@@ -31,6 +31,18 @@ export const MARK_SIZE_LABELS: Record<MarkSize, string> = {
   large: '크게',
 }
 
+/**
+ * 지나온 길을 어디까지 그릴지.
+ * - recent: 직전 컷에서 지금 자리까지만 (컷이 많아도 깔끔하다)
+ * - all: 첫 컷부터 지금까지 전부
+ */
+export type TrailMode = 'recent' | 'all'
+
+export const TRAIL_MODE_LABELS: Record<TrailMode, string> = {
+  recent: '직전 컷만',
+  all: '처음부터 전체',
+}
+
 interface ViewPrefs {
   /** 무대 9구역 점선 보기 */
   showGrid: boolean
@@ -41,6 +53,8 @@ interface ViewPrefs {
   flipped: boolean
   /** 지나온 길(궤적) 보기 */
   showTrails: boolean
+  /** 지나온 길 범위 */
+  trailMode: TrailMode
   /** 이전 컷 자리 보기 */
   showGhosts: boolean
   speed: PlaySpeed
@@ -65,6 +79,7 @@ export const useViewPrefs = create<ViewPrefs>((set, get) => ({
   showGrid: true,
   flipped: false,
   showTrails: true,
+  trailMode: 'recent',
   showGhosts: true,
   speed: 'normal',
   markSize: 'normal',
@@ -72,10 +87,10 @@ export const useViewPrefs = create<ViewPrefs>((set, get) => ({
   set: (patch) => {
     set(patch)
     try {
-      const { showGrid, flipped, showTrails, showGhosts, speed, markSize } = get()
+      const { showGrid, flipped, showTrails, trailMode, showGhosts, speed, markSize } = get()
       localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ showGrid, flipped, showTrails, showGhosts, speed, markSize }),
+        JSON.stringify({ showGrid, flipped, showTrails, trailMode, showGhosts, speed, markSize }),
       )
     } catch {
       // 저장이 안 돼도 이번 사용 중에는 그대로 적용된다.

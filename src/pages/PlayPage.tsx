@@ -26,8 +26,10 @@ import {
   MARK_SIZE_SCALE,
   SPEED_LABELS,
   SPEED_SECONDS,
+  TRAIL_MODE_LABELS,
   useViewPrefs,
   type PlaySpeed,
+  type TrailMode,
 } from '../store/viewPrefs'
 import type { Cut, Student } from '../db/types'
 
@@ -181,29 +183,30 @@ export default function PlayPage() {
     return list
   }, [cuts, progress, lastIndex, studentById, focusId])
 
-  /** 지나온 길 */
+  /**
+   * 지나온 길
+   * - '직전 컷에서': 컷 사이를 지나는 중이면 떠난 컷 → 지금 자리, 컷에 멈춰 있으면 바로 앞 컷 → 이 컷
+   * - '처음부터 전체': 첫 컷부터 지금 자리까지 전부
+   * - 한 배우만 따라가는 중이면 그 배우의 길만 그린다. (다른 배우 길은 흐리게도 그리지 않는다)
+   */
   const trails: Trail[] = useMemo(() => {
     if (!prefs.showTrails || cuts.length < 2) return []
     const upto = clampIndex(Math.floor(progress), lastIndex)
-    return students.flatMap((student) => {
+    const resting = progress - upto < 0.001
+    const from = prefs.trailMode === 'all' ? 0 : resting ? Math.max(0, upto - 1) : upto
+    const shown = focusId ? students.filter((s) => s.id === focusId) : students
+    return shown.flatMap((student) => {
       const points: { x: number; y: number }[] = []
-      for (let i = 0; i <= upto; i++) {
+      for (let i = from; i <= upto; i++) {
         const p = cuts[i]?.placements.find((pl) => pl.studentId === student.id)
         if (p) points.push({ x: p.x, y: p.y })
       }
       const now = marks.find((m) => m.id === student.id)
       if (now) points.push({ x: now.x, y: now.y })
       if (points.length < 2) return []
-      return [
-        {
-          id: student.id,
-          color: student.color,
-          points,
-          faded: Boolean(focusId) && focusId !== student.id,
-        },
-      ]
+      return [{ id: student.id, color: student.color, points }]
     })
-  }, [prefs.showTrails, cuts, progress, lastIndex, students, marks, focusId])
+  }, [prefs.showTrails, prefs.trailMode, cuts, progress, lastIndex, students, marks, focusId])
 
   function savePlanImage() {
     const stage = planStageRef.current
@@ -241,8 +244,12 @@ export default function PlayPage() {
             <>
               <p>▶ 버튼을 누르면 컷 1 → 2 → 3 순서로 배우들이 움직여요. 속도도 고를 수 있어요.</p>
               <p>
-                아래 배우 이름을 누르면 <strong>그 배우만 진하게</strong> 보여요. 한 번 더 누르면
-                모두 다시 보여요.
+                아래 배우 이름을 누르면 <strong>그 배우만 진하게</strong>, 지나온 길도 그 배우 것만
+                보여요. 한 번 더 누르면 모두 다시 보여요.
+              </p>
+              <p>
+                <strong>지나온 길 범위</strong>에서 &lsquo;직전 컷만&rsquo;을 고르면 바로 앞 컷에서 온
+                길만, &lsquo;처음부터 전체&rsquo;를 고르면 첫 컷부터 지금까지 모든 길이 보여요.
               </p>
               <p>
                 <strong>반대쪽에서 보기</strong>를 누르면 무대 위에서 객석을 바라본 모습으로
@@ -390,6 +397,25 @@ export default function PlayPage() {
                     반대쪽에서 보기
                   </button>
                 </div>
+
+                {prefs.showTrails && (
+                  <>
+                    <p className="side-label">지나온 길 범위</p>
+                    <div className="toolbar segmented segmented-2" role="group" aria-label="지나온 길 범위">
+                      {(Object.keys(TRAIL_MODE_LABELS) as TrailMode[]).map((m) => (
+                        <button
+                          key={m}
+                          type="button"
+                          className={`btn btn-ghost${prefs.trailMode === m ? ' is-on' : ''}`}
+                          onClick={() => prefs.set({ trailMode: m })}
+                          aria-pressed={prefs.trailMode === m}
+                        >
+                          {TRAIL_MODE_LABELS[m]}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
 
                 {/* 한 배우만 따라가기 */}
                 {students.length > 0 && (

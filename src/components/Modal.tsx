@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
+import { lockScroll } from '../lib/scrollLock'
 
 /** 대화상자 안에서 키보드로 옮겨 다닐 수 있는 요소들 */
 const FOCUSABLE =
@@ -60,13 +61,12 @@ export default function Modal({
     }
 
     document.addEventListener('keydown', onKey)
-    // 뒤 화면이 같이 스크롤되지 않게 잠근다.
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    // 뒤 화면이 같이 스크롤되지 않게 잠근다. (여러 개가 겹쳐 열려도 마지막이 닫힐 때 풀린다)
+    const unlockScroll = lockScroll()
 
     return () => {
       document.removeEventListener('keydown', onKey)
-      document.body.style.overflow = previousOverflow
+      unlockScroll()
       openerRef.current?.focus?.()
     }
   }, [])
