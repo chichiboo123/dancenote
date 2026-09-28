@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { lockScroll } from '../lib/scrollLock'
 
@@ -71,7 +72,9 @@ export default function Modal({
     }
   }, [])
 
-  return (
+  // 페이지 맨 바깥(body)에 그린다. 버튼이 sticky·transform 같은 겹침 층 안에 있으면
+  // z-index가 그 층 안에서만 통해서, 뒤에 그려지는 컷 목록 등이 창 위로 올라오기 때문이다.
+  return createPortal(
     <div className="modal-backdrop" onMouseDown={onClose}>
       <div
         className={`modal-box${wide ? ' modal-wide' : ''}`}
@@ -95,6 +98,7 @@ export default function Modal({
         </div>
         <div className="modal-content">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
