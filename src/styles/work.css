@@ -743,8 +743,9 @@
 .save-bar-status {
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
   line-height: 1.2;
-  min-width: 0;
+  white-space: nowrap;
 }
 
 .save-bar-count {
@@ -830,6 +831,26 @@
   /* 좁은 화면: 저장 줄 버튼이 두 줄로 꺾이지 않게 아이콘을 뺀다 */
   .save-bar-actions > .btn-primary svg {
     display: none;
+  }
+}
+
+/* 아주 좁은 폰(360px 이하): 저장 줄의 '12/12명'이 세로로 찌그러지지 않게 설명 글자를 빼고 여백을 줄인다 */
+@media (max-width: 360px) {
+  .save-bar {
+    padding-left: var(--sp-3);
+  }
+  .save-bar-inner {
+    gap: var(--sp-2);
+  }
+  .save-bar-count {
+    font-size: 19px;
+  }
+  .save-bar-label {
+    display: none;
+  }
+  .save-bar-actions > .btn {
+    padding-inline: var(--sp-2);
+    font-size: 15px;
   }
 }
 

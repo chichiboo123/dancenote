@@ -368,6 +368,14 @@
   flex: 1 1 150px;
 }
 
+/* 폰에서는 옆 여백을 줄여 '여러 명 붙여넣기' 같은 글자가 두 줄로 꺾이지 않게 한다. */
+@media (max-width: 480px) {
+  .toolbar > .btn {
+    padding-inline: var(--sp-3);
+    white-space: nowrap;
+  }
+}
+
 .toolbar > .btn:only-child {
   flex: 0 1 auto;
   min-width: 180px;
