@@ -13,6 +13,7 @@ import {
 import CutTimeline from '../components/CutTimeline'
 import { ExportProjectButton } from '../components/BackupButtons'
 import PdfExportButton from '../components/PdfExportButton'
+import PptxExportButton from '../components/PptxExportButton'
 import AppHeader from '../components/AppHeader'
 import StudentChip from '../components/StudentChip'
 import { db } from '../db/db'
@@ -178,19 +179,28 @@ export default function ProjectPage() {
         )}
 
         {/* 4. 다 만든 뒤에 하는 일 — 맨 아래에 모아 둔다 */}
-        <section className="card outbox">
-          <h2 className="section-title">
-            <Download size={20} aria-hidden="true" /> 내보내고 보관하기
+        <section className="card outbox" aria-labelledby="outbox-title">
+          <h2 className="outbox-title" id="outbox-title">
+            <Download size={18} aria-hidden="true" /> 내보내기
           </h2>
-          <p className="hint">
-            {cuts.length > 0
-              ? '만든 동선을 인쇄용 표로 뽑거나, 다른 기기로 옮길 수 있게 파일로 저장해요.'
-              : '컷을 만들면 동선표를 뽑을 수 있어요. 지금도 명단은 백업할 수 있어요.'}
-          </p>
-          <div className="toolbar">
-            <PdfExportButton projectId={id} />
-            <ExportProjectButton projectId={id} />
+          <div className="outbox-actions">
+            <PdfExportButton
+              projectId={id}
+              className="btn btn-ghost btn-small"
+              label="PDF"
+              disabled={cuts.length === 0}
+            />
+            <PptxExportButton
+              projectId={id}
+              className="btn btn-ghost btn-small"
+              label="PPT"
+              disabled={cuts.length === 0}
+            />
+            <ExportProjectButton projectId={id} className="btn btn-ghost btn-small" label="백업" />
           </div>
+          {cuts.length === 0 && (
+            <p className="hint outbox-hint">컷을 만들면 PDF·PPT로 뽑을 수 있어요. 명단은 지금도 백업돼요.</p>
+          )}
         </section>
 
         {/* 5. 공연 설정 — 자주 쓰지 않으니 맨 마지막에 */}

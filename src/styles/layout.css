@@ -939,20 +939,54 @@
 }
 
 /* --- 내보내기 묶음 (화면 아래쪽) --- */
+/* 내보내기: 제목 한 줄 + 작은 버튼 세 개 (넓은 화면에서는 한 줄로) */
 .outbox {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-4);
   margin-top: var(--sp-6);
+  padding: var(--sp-3) var(--sp-4);
 }
 
-.outbox .section-title {
-  margin-top: 0;
-  margin-bottom: var(--sp-1);
-  font-size: 18px;
+.outbox-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
-.outbox .toolbar > .btn {
-  min-height: 48px;
-  padding-inline: var(--sp-3);
-  font-size: 16px;
+.outbox-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-2);
+  width: 100%;
+}
+
+.outbox-actions > .btn {
+  padding-inline: var(--sp-2);
+  white-space: nowrap;
+}
+
+.outbox-hint {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 14px;
+}
+
+@media (min-width: 600px) {
+  .outbox-actions {
+    display: flex;
+    width: auto;
+    margin-left: auto;
+  }
+  .outbox-actions > .btn {
+    min-width: 96px;
+    padding-inline: var(--sp-4);
+  }
 }
 
 /* --- 공연 설정 (맨 아래 조용한 줄) --- */
