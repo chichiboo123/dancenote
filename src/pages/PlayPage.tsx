@@ -17,6 +17,7 @@ import AppHeader from '../components/AppHeader'
 import StagePlan, { type Mark, type Trail } from '../components/StagePlan'
 import CutTimeline from '../components/CutTimeline'
 import PdfExportButton from '../components/PdfExportButton'
+import PptxExportButton from '../components/PptxExportButton'
 import { db } from '../db/db'
 import { textColorOn } from '../lib/colors'
 import { downloadDataUrl, safeFileName } from '../lib/backup'
@@ -434,7 +435,8 @@ export default function PlayPage() {
                     <ImageDown size={20} aria-hidden="true" />
                     그림으로 저장
                   </button>
-                  <PdfExportButton projectId={id} />
+                  <PdfExportButton projectId={id} className="btn btn-ghost btn-small" />
+                  <PptxExportButton projectId={id} className="btn btn-ghost btn-small" />
                 </div>
               </div>
             </div>

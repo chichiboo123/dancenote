@@ -1,17 +1,19 @@
 import { useState } from 'react'
-import { FileDown } from 'lucide-react'
+import { Presentation } from 'lucide-react'
 import { toast } from 'sonner'
 import Modal from './Modal'
 import { db } from '../db/db'
 import { downloadFile, safeFileName } from '../lib/backup'
-import { exportCutsToPdf } from '../lib/pdfExport'
+import { exportCutsToPptx } from '../lib/pptxExport'
 import { useViewPrefs } from '../store/viewPrefs'
 
-/** 전체 컷을 동선표 PDF로 내보내기 */
-export default function PdfExportButton({
+const PPTX_TYPE = 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+
+/** 컷 하나를 한 장씩 담은 발표용 PPTX로 내보내기 */
+export default function PptxExportButton({
   projectId,
   className = 'btn btn-ghost',
-  label = '동선표 PDF',
+  label = '발표용 PPT',
   disabled = false,
 }: {
   projectId: string
@@ -20,7 +22,6 @@ export default function PdfExportButton({
   disabled?: boolean
 }) {
   const [open, setOpen] = useState(false)
-  const [perPage, setPerPage] = useState<4 | 6>(4)
   const [busy, setBusy] = useState(false)
   const prefs = useViewPrefs()
 
@@ -36,19 +37,18 @@ export default function PdfExportButton({
         return
       }
 
-      const blob = await exportCutsToPdf(project, cuts, students, {
-        perPage,
+      const blob = await exportCutsToPptx(project, cuts, students, {
         showTrails: prefs.showTrails,
         showGrid: prefs.showGrid,
         flipped: prefs.flipped,
       })
-      const fileName = safeFileName('dongseon-pyo', 'pdf')
-      downloadFile(blob, fileName, 'application/pdf')
-      toast.success(`동선표를 저장했어요! (${fileName})`)
+      const fileName = safeFileName('dongseon-slides', 'pptx')
+      downloadFile(blob, fileName, PPTX_TYPE)
+      toast.success(`발표 자료를 저장했어요! (${fileName})`)
       setOpen(false)
     } catch (err) {
       console.error(err)
-      toast.error('동선표를 만들지 못했어요.')
+      toast.error('발표 자료를 만들지 못했어요.')
     } finally {
       setBusy(false)
     }
@@ -61,37 +61,22 @@ export default function PdfExportButton({
         className={className}
         onClick={() => setOpen(true)}
         disabled={disabled}
-        title="인쇄하기 좋게 한 장에 여러 컷을 모은 PDF"
+        title="컷 하나를 한 장씩 크게 담은 PPT"
       >
-        <FileDown size={20} aria-hidden="true" />
+        <Presentation size={20} aria-hidden="true" />
         {label}
       </button>
 
       {open && (
-        <Modal title="동선표 PDF로 저장" onClose={() => setOpen(false)}>
+        <Modal title="발표용 PPT로 저장" onClose={() => setOpen(false)}>
           <p className="hint">
-            컷을 여러 개씩 한 장에 모아 인쇄하기 좋은 표로 만들어요. 컷 제목과 메모도 함께
-            들어가요.
+            첫 장은 표지, 그다음부터 <strong>한 장에 컷 하나</strong>씩 평면도를 크게 넣어요. 컷
+            제목과 메모는 글상자라서 파워포인트·구글 슬라이드·한쇼에서 바로 고칠 수 있어요.
           </p>
-
-          <div className="field">
-            <span className="field-label">한 장에 몇 컷씩 넣을까요?</span>
-            <div className="preset-row">
-              {([4, 6] as const).map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  className={`btn btn-ghost${perPage === n ? ' is-on' : ''}`}
-                  onClick={() => setPerPage(n)}
-                  aria-pressed={perPage === n}
-                >
-                  {n}컷
-                  <span className="preset-size">{n === 4 ? '크게 보여요' : '많이 담겨요'}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
+          <p className="hint">
+            슬라이드 노트에는 배우마다 무대 앞 번호(예: 왼 2)가 적혀 있어서, 연습 때 화면에 띄워
+            놓고 말로 알려 주기 좋아요.
+          </p>
           <p className="hint">
             지금 화면 설정을 그대로 씁니다 — {prefs.flipped ? '무대에서 본 모습' : '객석에서 본 모습'}
             , 9구역 선 {prefs.showGrid ? '켬' : '끔'}, 지나온 길 {prefs.showTrails ? '켬' : '끔'}.
@@ -103,7 +88,7 @@ export default function PdfExportButton({
             onClick={handleExport}
             disabled={busy}
           >
-            {busy ? '만드는 중이에요…' : 'PDF 저장하기'}
+            {busy ? '만드는 중이에요…' : 'PPT 저장하기'}
           </button>
         </Modal>
       )}

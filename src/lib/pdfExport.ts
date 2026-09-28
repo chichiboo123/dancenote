@@ -17,8 +17,8 @@ const MARGIN = 60
 /** 칸마다 제목·메모가 차지하는 높이 (내용이 짧아도 같은 높이를 쓴다) */
 const HEADER_H = 86
 
-/** 밝은 무대 색으로 고정한다. (종이에 인쇄할 것이므로) */
-const PRINT_COLORS: PlanColors = {
+/** 밝은 무대 색으로 고정한다. (종이에 인쇄하거나 발표 자료에 넣을 것이므로) */
+export const PRINT_COLORS: PlanColors = {
   bg: '#FFFFFF',
   floor: '#F6E6CC',
   plank: '#DFC49B',
@@ -175,20 +175,7 @@ function drawCutCard(
   const planX = rect.x + (availW - planW) / 2
   const planY = planTop
 
-  const icons: PlanIcon[] = cut.placements.flatMap((p) => {
-    const student = studentById[p.studentId]
-    if (!student) return []
-    return [{ x: p.x, y: p.y, color: student.color, label: student.shortName, emoji: student.emoji }]
-  })
-
-  const trails: PlanTrail[] = options.showTrails && previous
-    ? cut.placements.flatMap((p) => {
-        const student = studentById[p.studentId]
-        const before = previous.placements.find((q) => q.studentId === p.studentId)
-        if (!student || !before) return []
-        return [{ color: student.color, points: [{ x: before.x, y: before.y }, { x: p.x, y: p.y }] }]
-      })
-    : []
+  const { icons, trails } = cutPlanLayers(cut, previous, studentById, options.showTrails)
 
   drawStagePlan(ctx, {
     rect: { x: planX, y: planY, width: planW, height: planH },
@@ -210,6 +197,31 @@ function drawCutCard(
     ctx.textAlign = 'left'
     ctx.textBaseline = 'top'
   }
+}
+
+/** 컷 하나의 이름표와 지나온 길(직전 컷에서 온 길)을 평면도에 그릴 모양으로 바꾼다. */
+export function cutPlanLayers(
+  cut: Cut,
+  previous: Cut | undefined,
+  studentById: Record<string, Student>,
+  showTrails: boolean,
+): { icons: PlanIcon[]; trails: PlanTrail[] } {
+  const icons: PlanIcon[] = cut.placements.flatMap((p) => {
+    const student = studentById[p.studentId]
+    if (!student) return []
+    return [{ x: p.x, y: p.y, color: student.color, label: student.shortName, emoji: student.emoji }]
+  })
+
+  const trails: PlanTrail[] = showTrails && previous
+    ? cut.placements.flatMap((p) => {
+        const student = studentById[p.studentId]
+        const before = previous.placements.find((q) => q.studentId === p.studentId)
+        if (!student || !before) return []
+        return [{ color: student.color, points: [{ x: before.x, y: before.y }, { x: p.x, y: p.y }] }]
+      })
+    : []
+
+  return { icons, trails }
 }
 
 /** 긴 글을 칸 너비에 맞춰 줄바꿈한다. 다음 글이 시작될 y를 돌려준다. */
@@ -249,7 +261,7 @@ function wrapText(
   return cursorY
 }
 
-function formatSec(sec: number): string {
+export function formatSec(sec: number): string {
   const m = Math.floor(sec / 60)
   const s = Math.floor(sec % 60)
   return `${m}:${String(s).padStart(2, '0')}`

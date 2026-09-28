@@ -5,7 +5,15 @@ import Modal from './Modal'
 import { downloadFile, exportProject, importProject } from '../lib/backup'
 
 /** 공연 하나를 백업 파일로 내보내기 */
-export function ExportProjectButton({ projectId }: { projectId: string }) {
+export function ExportProjectButton({
+  projectId,
+  className = 'btn btn-ghost',
+  label = '백업 저장',
+}: {
+  projectId: string
+  className?: string
+  label?: string
+}) {
   const [open, setOpen] = useState(false)
   const [includePhotos, setIncludePhotos] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -27,9 +35,14 @@ export function ExportProjectButton({ projectId }: { projectId: string }) {
 
   return (
     <>
-      <button type="button" className="btn btn-ghost" onClick={() => setOpen(true)}>
-        <Download size={22} aria-hidden="true" />
-        백업 저장
+      <button
+        type="button"
+        className={className}
+        onClick={() => setOpen(true)}
+        title="다른 기기로 옮기거나 보관하는 백업 파일"
+      >
+        <Download size={20} aria-hidden="true" />
+        {label}
       </button>
 
       {open && (
