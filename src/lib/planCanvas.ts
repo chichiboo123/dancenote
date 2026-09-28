@@ -17,11 +17,29 @@ export interface PlanIcon {
   label: string
   /** 이모지 모양 이름표 */
   emoji?: string
+  /** 0~1 (컷 사이에서 나타나거나 사라지는 중) */
+  opacity?: number
+  /** 한 배우만 따라갈 때 나머지 배우 */
+  faded?: boolean
 }
 
 export interface PlanTrail {
   color: string
   points: { x: number; y: number }[]
+  faded?: boolean
+}
+
+/**
+ * 화면(StagePlan)의 이름표 크기를 그대로 옮기기 위한 기준.
+ * 화면은 반지름을 `clamp(16, 28, 무대 가로 / 18) × 이름표 크기`로 그린다.
+ * 태블릿에서 흔한 무대 가로 640px일 때의 비율을 그림 크기에 맞춰 늘리거나 줄인다.
+ */
+const SCREEN_FLOOR_W = 640
+const SCREEN_ICON_R = Math.max(16, Math.min(28, SCREEN_FLOOR_W / 18))
+
+/** 무대 가로 planW에 그릴 때, 화면과 같은 비율의 이름표 반지름 */
+export function screenIconRadius(planW: number, markScale = 1): number {
+  return (SCREEN_ICON_R * markScale * planW) / SCREEN_FLOOR_W
 }
 
 export interface DrawPlanOptions {
@@ -40,6 +58,8 @@ export interface DrawPlanOptions {
   labelFontSize?: number
   /** 무대 앞쪽 센터 기준 번호 표시 */
   showMarks?: boolean
+  /** 이름표 크기 (작게 0.75 · 보통 1 · 크게 1.3). iconRadius를 주지 않았을 때 쓴다. */
+  markScale?: number
 }
 
 export function drawStagePlan(ctx: CanvasRenderingContext2D, options: DrawPlanOptions) {
@@ -54,9 +74,12 @@ export function drawStagePlan(ctx: CanvasRenderingContext2D, options: DrawPlanOp
     labels = true,
     labelFontSize,
     showMarks = true,
+    markScale = 1,
   } = options
   const { x: ox, y: oy, width: w, height: h } = rect
-  const r = iconRadius ?? Math.max(12, w / 16)
+  const r = iconRadius ?? screenIconRadius(w, markScale)
+  // 화면 기준(무대 가로 640px)에 견준 배율. 선 굵기를 화면과 같은 비율로 맞춘다.
+  const k = Math.max(0.5, w / SCREEN_FLOOR_W)
 
   const toView = (x: number, y: number) => ({
     x: ox + (flipped ? 1 - x : x) * w,
@@ -105,20 +128,24 @@ export function drawStagePlan(ctx: CanvasRenderingContext2D, options: DrawPlanOp
   ctx.lineWidth = 3
   ctx.stroke()
 
-  // 지나온 길
-  ctx.setLineDash([9, 7])
-  ctx.lineWidth = 3
+  // 지나온 길 (화면처럼 부드러운 곡선)
+  ctx.setLineDash([9 * k, 7 * k])
+  ctx.lineWidth = 3 * k
   ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
   for (const trail of trails) {
     if (trail.points.length < 2) continue
     ctx.strokeStyle = trail.color
-    ctx.globalAlpha = 0.65
+    ctx.globalAlpha = trail.faded ? 0.18 : 0.7
     ctx.beginPath()
-    trail.points.forEach((p, i) => {
-      const v = toView(p.x, p.y)
-      if (i === 0) ctx.moveTo(v.x, v.y)
-      else ctx.lineTo(v.x, v.y)
-    })
+    tensionPath(
+      ctx,
+      trail.points.flatMap((p) => {
+        const v = toView(p.x, p.y)
+        return [v.x, v.y]
+      }),
+      0.25,
+    )
     ctx.stroke()
   }
   ctx.globalAlpha = 1
@@ -177,14 +204,24 @@ export function drawStagePlan(ctx: CanvasRenderingContext2D, options: DrawPlanOp
     ctx.fillText(flipped ? '무대 뒤' : '객석', ox + w / 2, oy + h + (showMarks && !flipped ? 26 : 6))
   }
 
-  // 학생 아이콘
+  // 배우 이름표 — 모양·비율은 화면(StagePlan)과 같게: 흰 테두리 4/28, 글자 0.66배, 아래 그림자
   for (const icon of icons) {
+    const alpha = (icon.opacity ?? 1) * (icon.faded ? 0.28 : 1)
+    if (alpha <= 0) continue
     const v = toView(icon.x, icon.y)
+    const u = r / SCREEN_ICON_R // 화면 이름표(반지름 28)에 견준 배율
+    ctx.globalAlpha = alpha
+
+    ctx.beginPath()
+    ctx.arc(v.x, v.y + 2 * u, r + 2 * u, 0, Math.PI * 2)
+    ctx.fillStyle = 'rgba(31,42,68,0.22)'
+    ctx.fill()
+
     ctx.beginPath()
     ctx.arc(v.x, v.y, r, 0, Math.PI * 2)
     ctx.fillStyle = icon.color
     ctx.fill()
-    ctx.lineWidth = Math.max(2, r * 0.22)
+    ctx.lineWidth = Math.max(1.5, 4 * u)
     ctx.strokeStyle = '#ffffff'
     ctx.stroke()
 
@@ -192,22 +229,62 @@ export function drawStagePlan(ctx: CanvasRenderingContext2D, options: DrawPlanOp
     ctx.textBaseline = 'middle'
     if (icon.emoji) {
       // 이모지는 동그라미 안에, 짧은 이름은 아래에 작은 띠로
-      ctx.font = `${Math.round(r * 1.1)}px ${CANVAS_FONT}`
+      ctx.font = `${Math.round(r * 1.15)}px ${CANVAS_FONT}`
       ctx.fillText(icon.emoji, v.x, v.y + r * 0.06)
-      const fs = Math.max(8, Math.round(r * 0.5))
+      const fs = Math.max(8, Math.round(r * 0.46))
       ctx.font = `700 ${fs}px ${CANVAS_FONT}`
-      const tw = ctx.measureText(icon.label).width + 6
-      roundRect(ctx, v.x - tw / 2, v.y + r - 2, tw, fs + 4, 5)
+      const pad = Math.max(1.5, 2 * u)
+      const tw = ctx.measureText(icon.label).width + pad * 2
+      roundRect(ctx, v.x - tw / 2, v.y + r - 2 * u, tw, fs + pad * 2, 7 * u)
       ctx.fillStyle = icon.color
       ctx.fill()
+      ctx.lineWidth = 1.5 * u
+      ctx.strokeStyle = '#ffffff'
+      ctx.stroke()
       ctx.fillStyle = textColorOn(icon.color)
-      ctx.fillText(icon.label, v.x, v.y + r - 2 + (fs + 4) / 2)
+      ctx.fillText(icon.label, v.x, v.y + r - 2 * u + (fs + pad * 2) / 2)
     } else {
       ctx.fillStyle = textColorOn(icon.color)
-      ctx.font = `700 ${Math.round(r * 0.72)}px ${CANVAS_FONT}`
+      ctx.font = `700 ${Math.round(Math.max(8, r * 0.66))}px ${CANVAS_FONT}`
       ctx.fillText(icon.label, v.x, v.y + r * 0.04)
     }
   }
+  ctx.globalAlpha = 1
+}
+
+/**
+ * 점 여러 개를 화면(Konva Line의 tension)과 같은 방식의 부드러운 곡선으로 잇는다.
+ * points는 [x0, y0, x1, y1, ...] 모양이다. 점이 두 개면 곧은 선이다.
+ */
+function tensionPath(ctx: CanvasRenderingContext2D, points: number[], tension: number) {
+  ctx.moveTo(points[0], points[1])
+  if (points.length <= 4) {
+    ctx.lineTo(points[2], points[3])
+    return
+  }
+  // 가운데 점마다 앞뒤 조절점을 구한다: [c1x, c1y, x, y, c2x, c2y, ...]
+  const tp: number[] = []
+  for (let n = 2; n < points.length - 2; n += 2) {
+    const [x0, y0, x1, y1, x2, y2] = points.slice(n - 2, n + 4)
+    const d01 = Math.hypot(x1 - x0, y1 - y0)
+    const d12 = Math.hypot(x2 - x1, y2 - y1)
+    const fa = (tension * d01) / (d01 + d12)
+    const fb = (tension * d12) / (d01 + d12)
+    if (!Number.isFinite(fa) || !Number.isFinite(fb)) continue
+    tp.push(x1 - fa * (x2 - x0), y1 - fa * (y2 - y0), x1, y1, x1 + fb * (x2 - x0), y1 + fb * (y2 - y0))
+  }
+  if (tp.length === 0) {
+    for (let n = 2; n < points.length; n += 2) ctx.lineTo(points[n], points[n + 1])
+    return
+  }
+  ctx.quadraticCurveTo(tp[0], tp[1], tp[2], tp[3])
+  let n = 4
+  while (n < tp.length - 2) {
+    ctx.bezierCurveTo(tp[n], tp[n + 1], tp[n + 2], tp[n + 3], tp[n + 4], tp[n + 5])
+    n += 6
+  }
+  const len = points.length
+  ctx.quadraticCurveTo(tp[tp.length - 2], tp[tp.length - 1], points[len - 2], points[len - 1])
 }
 
 function roundRect(

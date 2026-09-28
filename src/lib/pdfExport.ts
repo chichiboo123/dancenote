@@ -2,6 +2,8 @@ import { CANVAS_FONT } from './canvasFont'
 import { drawStagePlan, type PlanIcon, type PlanTrail } from './planCanvas'
 import type { PlanColors } from './planColors'
 import type { Cut, Project, Student } from '../db/types'
+import type { TrailMode } from '../store/viewPrefs'
+import { marksAt, trailsAt } from './playback'
 
 /**
  * 컷 여러 개를 한 장에 모아 놓은 동선표 PDF를 만든다.
@@ -36,8 +38,12 @@ export interface PdfOptions {
   perPage: 4 | 6
   /** 지나온 길(이전 컷에서 온 길)도 그릴지 */
   showTrails: boolean
+  /** 지나온 길 범위 (화면 동선 재생과 같게) */
+  trailMode: TrailMode
   showGrid: boolean
   flipped: boolean
+  /** 이름표 크기 (화면 설정과 같게) */
+  markScale: number
 }
 
 export async function exportCutsToPdf(
@@ -103,7 +109,9 @@ export async function exportCutsToPdf(
       drawCutCard(ctx, {
         cut,
         cutNumber: cutIndex + 1,
-        previous: cuts[cutIndex - 1],
+        cuts,
+        cutIndex,
+        students,
         studentById,
         rect: { x: cellX + 12, y: cellY + 12, width: cellW - 24, height: cellH - 24 },
         stageRatio: project.stageDepthM / project.stageWidthM,
@@ -129,7 +137,9 @@ function drawCutCard(
   args: {
     cut: Cut
     cutNumber: number
-    previous?: Cut
+    cuts: Cut[]
+    cutIndex: number
+    students: Student[]
     studentById: Record<string, Student>
     rect: { x: number; y: number; width: number; height: number }
     /** 무대 세로/가로 비율 */
@@ -137,7 +147,7 @@ function drawCutCard(
     options: PdfOptions
   },
 ) {
-  const { cut, cutNumber, previous, studentById, rect, stageRatio, options } = args
+  const { cut, cutNumber, cuts, cutIndex, students, studentById, rect, stageRatio, options } = args
 
   // 제목 줄
   ctx.textAlign = 'left'
@@ -175,7 +185,7 @@ function drawCutCard(
   const planX = rect.x + (availW - planW) / 2
   const planY = planTop
 
-  const { icons, trails } = cutPlanLayers(cut, previous, studentById, options.showTrails)
+  const { icons, trails } = cutPlanLayers(cuts, cutIndex, students, studentById, options)
 
   drawStagePlan(ctx, {
     rect: { x: planX, y: planY, width: planW, height: planH },
@@ -184,7 +194,7 @@ function drawCutCard(
     trails,
     showGrid: options.showGrid,
     flipped: options.flipped,
-    iconRadius: Math.max(13, planW / 17),
+    markScale: options.markScale,
     labelFontSize: 21,
   })
 
@@ -199,28 +209,28 @@ function drawCutCard(
   }
 }
 
-/** 컷 하나의 이름표와 지나온 길(직전 컷에서 온 길)을 평면도에 그릴 모양으로 바꾼다. */
+/**
+ * 컷 하나의 이름표와 지나온 길을 평면도에 그릴 모양으로 바꾼다.
+ * 동선 재생 화면에서 그 컷에 멈춰 있을 때와 똑같이 계산한다. (lib/playback.ts)
+ */
 export function cutPlanLayers(
-  cut: Cut,
-  previous: Cut | undefined,
+  cuts: Cut[],
+  cutIndex: number,
+  students: Student[],
   studentById: Record<string, Student>,
-  showTrails: boolean,
+  options: { showTrails: boolean; trailMode: TrailMode },
 ): { icons: PlanIcon[]; trails: PlanTrail[] } {
-  const icons: PlanIcon[] = cut.placements.flatMap((p) => {
-    const student = studentById[p.studentId]
-    if (!student) return []
-    return [{ x: p.x, y: p.y, color: student.color, label: student.shortName, emoji: student.emoji }]
-  })
-
-  const trails: PlanTrail[] = showTrails && previous
-    ? cut.placements.flatMap((p) => {
-        const student = studentById[p.studentId]
-        const before = previous.placements.find((q) => q.studentId === p.studentId)
-        if (!student || !before) return []
-        return [{ color: student.color, points: [{ x: before.x, y: before.y }, { x: p.x, y: p.y }] }]
-      })
+  const marks = marksAt(cuts, studentById, cutIndex).filter((m) => m.opacity > 0)
+  const icons: PlanIcon[] = marks.map((m) => ({
+    x: m.x,
+    y: m.y,
+    color: m.color,
+    label: m.label,
+    emoji: m.emoji,
+  }))
+  const trails: PlanTrail[] = options.showTrails
+    ? trailsAt(cuts, students, cutIndex, marks, { trailMode: options.trailMode })
     : []
-
   return { icons, trails }
 }
 

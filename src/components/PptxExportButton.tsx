@@ -5,7 +5,7 @@ import Modal from './Modal'
 import { db } from '../db/db'
 import { downloadFile, safeFileName } from '../lib/backup'
 import { exportCutsToPptx } from '../lib/pptxExport'
-import { useViewPrefs } from '../store/viewPrefs'
+import { MARK_SIZE_LABELS, MARK_SIZE_SCALE, TRAIL_MODE_LABELS, useViewPrefs } from '../store/viewPrefs'
 
 const PPTX_TYPE = 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
 
@@ -39,8 +39,10 @@ export default function PptxExportButton({
 
       const blob = await exportCutsToPptx(project, cuts, students, {
         showTrails: prefs.showTrails,
+        trailMode: prefs.trailMode,
         showGrid: prefs.showGrid,
         flipped: prefs.flipped,
+        markScale: MARK_SIZE_SCALE[prefs.markSize],
       })
       const fileName = safeFileName('dongseon-slides', 'pptx')
       downloadFile(blob, fileName, PPTX_TYPE)
@@ -79,7 +81,8 @@ export default function PptxExportButton({
           </p>
           <p className="hint">
             지금 화면 설정을 그대로 씁니다 — {prefs.flipped ? '무대에서 본 모습' : '객석에서 본 모습'}
-            , 9구역 선 {prefs.showGrid ? '켬' : '끔'}, 지나온 길 {prefs.showTrails ? '켬' : '끔'}.
+            , 이름표 {MARK_SIZE_LABELS[prefs.markSize]}, 9구역 선 {prefs.showGrid ? '켬' : '끔'}, 지나온 길{' '}
+            {prefs.showTrails ? TRAIL_MODE_LABELS[prefs.trailMode] : '끔'}.
           </p>
 
           <button
